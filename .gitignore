@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Data & models (never commit raw data or artifacts)
+data/
+*.parquet
+*.csv
+*.pkl
+*.joblib
+mlruns/
+mlartifacts/
+
+# AWS / secrets
+.env
+*.pem
+credentials
+.aws/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Course material (not my work - stays local, out of the public repo)
+*.xlsx

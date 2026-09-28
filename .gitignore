@@ -34,3 +34,6 @@ credentials
 
 # Course material (not my work - stays local, out of the public repo)
 *.xlsx
+
+# Model artifacts (generated, never committed)
+artifacts/

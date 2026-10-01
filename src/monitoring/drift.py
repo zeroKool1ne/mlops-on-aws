@@ -125,3 +125,80 @@ def build_reference(frame: pd.DataFrame, columns: list[str],
         "window": [str(frame.index[0].date()), str(frame.index[-1].date())],
         "features": features,
     }
+
+
+def psi_from_reference(stored: dict, current: np.ndarray) -> float:
+    """PSI against a frozen reference, using its stored bin edges.
+
+    `build_reference` deliberately keeps only the distribution shape, not the
+    raw data. That makes the reference small and privacy-free, but it means the
+    comparison cannot recompute bin edges - it has to reuse the frozen ones,
+    which is exactly what ADR-12 requires.
+    """
+    edges = np.asarray(stored["bin_edges"], dtype=float)
+    ref_pct = np.clip(np.asarray(stored["bin_shares"], dtype=float), 1e-6, None)
+
+    current = np.asarray(current, dtype=float)
+    current = current[np.isfinite(current)]
+    if len(current) < 20:
+        return float("nan")
+
+    # Values beyond the reference range belong in the outermost bins, not
+    # nowhere: a feature that has moved off the edge of the old distribution is
+    # the strongest drift signal there is and must not be silently dropped.
+    clipped = np.clip(current, edges[0], edges[-1])
+    cur_pct = np.clip(np.histogram(clipped, bins=edges)[0] / len(clipped), 1e-6, None)
+
+    return float(np.sum((cur_pct - ref_pct) * np.log(cur_pct / ref_pct)))
+
+
+def compare_to_reference(reference: dict, current: pd.DataFrame) -> pd.DataFrame:
+    """Score the current window against a stored reference, feature by feature.
+
+    Returns one row per feature, worst first. This is the function the
+    scheduled drift check calls; `compare` is its two-frame sibling for
+    interactive analysis in a notebook.
+    """
+    rows = []
+    for col, stored in reference["features"].items():
+        if col not in current.columns:
+            continue
+        values = current[col].dropna().to_numpy(dtype=float)
+        score = psi_from_reference(stored, values)
+        rows.append({
+            "feature": col,
+            "psi": round(score, 4) if np.isfinite(score) else None,
+            "verdict": classify(score),
+            "n_current": int(len(values)),
+        })
+
+    frame = pd.DataFrame(rows)
+    if frame.empty:
+        return frame
+    return frame.sort_values("psi", ascending=False, na_position="last").reset_index(drop=True)
+
+
+def summarise(scores: pd.DataFrame) -> dict:
+    """Condense per-feature scores into the few numbers an alert needs.
+
+    The headline is the MAXIMUM PSI, not the mean. Drift in one decisive
+    feature is a real problem that an average over twenty-nine stable features
+    would hide completely.
+    """
+    if scores.empty:
+        return {"status": "unknown", "reason": "no comparable features"}
+
+    usable = scores.dropna(subset=["psi"])
+    counts = usable["verdict"].value_counts().to_dict()
+    worst = usable.iloc[0] if not usable.empty else None
+
+    return {
+        "status": classify(float(worst["psi"])) if worst is not None else "unknown",
+        "max_psi": float(worst["psi"]) if worst is not None else None,
+        "worst_feature": str(worst["feature"]) if worst is not None else None,
+        "mean_psi": round(float(usable["psi"].mean()), 4) if not usable.empty else None,
+        "n_features": int(len(usable)),
+        "n_significant": int(counts.get("significant", 0)),
+        "n_moderate": int(counts.get("moderate", 0)),
+        "n_stable": int(counts.get("stable", 0)),
+    }

@@ -1,0 +1,15 @@
+{
+"Rules": [
+{
+	"ID": "cleanup-old-versions",
+	"Status": "Enabled",
+	"Filter": {},
+	"NoncurrentVersionExpiration": {
+		"NoncurrentDays": 30
+},
+	"AbortIncompleteMultipartUpload": {
+		"DaysAfterInitiation": 7
+		}
+	}
+]
+}

@@ -1,0 +1,31 @@
+# Runtime dependencies for the container image — deliberately NOT requirements.txt.
+#
+# requirements.txt is the development environment: it carries shap, prophet,
+# matplotlib, seaborn, mlflow, the SageMaker SDK and pytest. None of that is
+# needed to answer a prediction request, and every megabyte of it would be
+# pulled into the image, slowing down the cold start of every Lambda
+# invocation for the rest of the project's life.
+#
+# Versions are IDENTICAL to requirements.txt wherever they overlap. This is not
+# tidiness: the model artifact is a pickle, and unpickling a scikit-learn
+# estimator under a different version than it was written with is a documented
+# source of silently wrong predictions. The pin is the guarantee that the model
+# meets the same library in production that it met in training.
+#
+# boto3 ships inside the Lambda runtime, so it is not installed here.
+
+# web layer
+fastapi==0.115.6
+pydantic==2.10.4
+mangum==0.19.0
+
+# data and model — must match training exactly
+pandas==3.0.6
+numpy==2.5.3
+scikit-learn==1.9.1
+joblib==1.6.0
+scipy==1.18.1
+pyarrow==25.0.1
+
+# ingestion
+yfinance==1.7.0

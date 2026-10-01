@@ -1,0 +1,23 @@
+# Everything the image does not need. Each entry is either large, secret, or
+# would change the image digest on every commit for no reason.
+.git
+.venv
+.github
+notebooks
+scripts
+docs
+infra
+tests
+artifacts
+data
+mlruns
+*.epub
+*.xlsx
+*.ipynb
+__pycache__
+*.pyc
+.DS_Store
+.pytest_cache
+README.md
+LICENSE
+requirements.txt

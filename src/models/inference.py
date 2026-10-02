@@ -67,8 +67,10 @@ def predict_fn(request: dict, bundle: dict) -> dict:
     frames = fetch_all(period="1y")
     row = make_inference_row(frames, as_of)
 
-    # Column order is part of the model contract - never trust dict ordering.
-    X = row[metadata["feature_columns"]].to_numpy()
+    # Column order is part of the model contract. Passing a DataFrame rather
+    # than an array means scikit-learn verifies that contract against the names
+    # it was fitted with, instead of trusting that this line got it right.
+    X = row[metadata["feature_columns"]]
     value = float(model.predict(X)[0])
 
     last_close = float(frames["gold"]["close"].loc[: row.index[-1]].iloc[-1])

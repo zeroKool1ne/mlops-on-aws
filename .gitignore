@@ -37,3 +37,8 @@ credentials
 
 # Model artifacts (generated, never committed)
 artifacts/
+
+# MLflow local backend and artifact store
+mlflow.db
+mlartifacts/
+mlruns/

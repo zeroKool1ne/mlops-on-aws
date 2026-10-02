@@ -109,7 +109,12 @@ def main() -> None:
         frame_fit = frame
         print("training on all rows (holdout disabled)")
 
-    X = frame_fit[features].to_numpy()
+    # A DataFrame, deliberately not .to_numpy(). Fitting on named columns makes
+    # scikit-learn store the feature names inside the estimator, so feeding it
+    # columns in the wrong order later raises instead of silently scoring
+    # nonsense. The column order is part of the model contract either way; this
+    # is what makes the contract enforce itself.
+    X = frame_fit[features]
     y = build_target(frame_fit, args.target)
 
     # Random Forest won the comparison for both targets (see compare.py).
@@ -146,6 +151,32 @@ def main() -> None:
 
     print(f"wrote {model_dir / MODEL_FILENAME}")
     print(f"wrote {model_dir / METADATA_FILENAME}")
+
+    # Tracking is best-effort by design. Losing the record of a run is bad;
+    # losing the model because the tracking backend was unreachable would be
+    # worse, so the artifact is written above this line, not below it.
+    from src.models import tracking
+
+    with tracking.run(f"train-{args.target}", target=args.target) as active:
+        tracking.log_params({
+            **metadata["hyperparameters"],
+            "target": args.target,
+            "holdout_days": args.holdout_days,
+            "n_features": len(features),
+            "n_training_rows": len(X),
+            "train_start": metadata["training_window"][0],
+            "train_end": metadata["training_window"][1],
+            "model_class": type(model).__name__,
+        })
+        tracking.log_artifacts([model_dir / METADATA_FILENAME], subdir="metadata")
+
+        if active is not None:
+            tracking.write_summary(model_dir / "run.json", {
+                "run_id": active.info.run_id,
+                "experiment_id": active.info.experiment_id,
+                "tracking_uri": tracking.TRACKING_URI,
+            })
+            print(f"wrote {model_dir / 'run.json'} (mlflow run {active.info.run_id})")
 
 
 if __name__ == "__main__":

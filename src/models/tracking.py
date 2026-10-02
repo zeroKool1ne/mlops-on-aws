@@ -34,9 +34,25 @@ log = logging.getLogger(__name__)
 
 EXPERIMENT = os.environ.get("MLFLOW_EXPERIMENT", "gold-usd-forecasting")
 
-# File backend by default. Point MLFLOW_TRACKING_URI at a server and the same
-# code logs there instead, without an edit.
-TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", f"file://{Path('mlruns').resolve()}")
+# SQLite by default, not the plain `mlruns/` file store. Two reasons, and the
+# second is not optional:
+#
+#   1. MLflow 3 put the filesystem backend into maintenance mode and raises
+#      unless it is explicitly opted back into.
+#   2. The Model Registry has never worked on the file store at all - it needs
+#      a database backend. A registry is required here (ADR-9), so SQLite is
+#      the requirement, not a workaround.
+#
+# This changes nothing about the argument in ADR-9: SQLite is a file on disk,
+# so there is still no server running around the clock. Point
+# MLFLOW_TRACKING_URI at a real server and the same code logs there instead,
+# without an edit.
+TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", f"sqlite:///{Path('mlflow.db').resolve()}")
+
+# Where the artifacts themselves go. Locally a directory; set this to an S3
+# prefix and the artifacts become durable and shareable while the metadata
+# stays in SQLite (ADR-9).
+ARTIFACT_LOCATION = os.environ.get("MLFLOW_ARTIFACT_LOCATION", str(Path("mlartifacts").resolve()))
 
 REGISTERED_MODEL = os.environ.get("MLFLOW_MODEL_NAME", "gold-volatility")
 
@@ -113,6 +129,11 @@ def run(name: str, target: str, nested: bool = False):
     import mlflow
 
     mlflow.set_tracking_uri(TRACKING_URI)
+
+    # set_experiment alone cannot set an artifact location on an experiment
+    # that does not exist yet, so create it explicitly the first time.
+    if mlflow.get_experiment_by_name(EXPERIMENT) is None:
+        mlflow.create_experiment(EXPERIMENT, artifact_location=ARTIFACT_LOCATION)
     mlflow.set_experiment(EXPERIMENT)
 
     with mlflow.start_run(run_name=name, nested=nested) as active:
@@ -197,31 +218,83 @@ def promotion_decision(evaluation: dict) -> tuple[bool, str]:
     return True, f"beats baseline by {margin:.2f}%"
 
 
-def register(model_dir: Path | str, evaluation: dict, run_id: str | None = None) -> dict:
+def _log_sklearn_model(model, example=None, signature=None) -> str:
+    """Log the estimator as a proper MLflow model and return its URI.
+
+    MLflow 3 distinguishes a *logged model* - an entity with a flavor, a
+    signature and an environment - from loose files sitting at an artifact
+    path. Only the former can be registered, and that is the right
+    distinction: a registry entry that is just a pickle in a folder cannot be
+    loaded back without knowing what wrote it.
+
+    The keyword for the artifact name changed between MLflow 2 and 3, so both
+    spellings are attempted rather than pinning the caller to one version.
+
+    On `skops_trusted_types`. MLflow serialises through skops, which refuses by
+    default to write the tree storage used by every forest and boosting model.
+    The reason is real: that object holds raw node indices which scikit-learn
+    indexes into without bounds checking, so a *tampered* file can read out of
+    bounds or segfault when `.predict()` is called. It is declared trusted here
+    because this file is produced by this project's own training job, in this
+    process, from this estimator - there is no untrusted source in the path.
+    The same declaration would be wrong when loading a model downloaded from
+    somewhere else, which is exactly the case the default protects.
+    """
+    import mlflow.sklearn
+
+    kwargs = {
+        "sk_model": model,
+        "signature": signature,
+        "input_example": example,
+        "skops_trusted_types": ["sklearn.tree._tree.Tree"],
+    }
+    try:
+        return mlflow.sklearn.log_model(name="model", **kwargs).model_uri
+    except TypeError:
+        # MLflow 2 knows neither `name` nor `skops_trusted_types`.
+        kwargs.pop("skops_trusted_types", None)
+        return mlflow.sklearn.log_model(artifact_path="model", **kwargs).model_uri
+
+
+def register(model, evaluation: dict, model_dir: Path | str | None = None,
+             example=None) -> dict:
     """Register the model, and promote it only if it earned promotion.
 
-    Every run is registered, including the ones that fail the gate — a rejected
-    candidate is evidence, and deleting it would hide that a decision was made.
-    Only a model that passes both gates gets the "champion" alias, which is
-    what the deployment reads.
+    Every evaluated model is registered, including the ones that fail the gate
+    - a rejected candidate is evidence that a decision was made, and deleting
+    it hides that. Only a model that passes both gates gets the "champion"
+    alias, which is what the deployment reads.
     """
     decision = {"registered": False, "promoted": False}
 
     if not available():
-        log.warning("mlflow not installed — model not registered")
+        log.warning("mlflow not installed - model not registered")
         return decision
 
     import mlflow
+    from mlflow.models import infer_signature
     from mlflow.tracking import MlflowClient
 
     promote, reason = promotion_decision(evaluation)
     decision["reason"] = reason
 
-    model_dir = Path(model_dir)
-    mlflow.log_artifacts(str(model_dir), artifact_path="model")
+    # A signature is what makes a serving-time schema mismatch an error at the
+    # boundary instead of silently wrong numbers downstream.
+    signature = None
+    if example is not None:
+        try:
+            signature = infer_signature(example, model.predict(example))
+        except Exception as exc:
+            log.warning("could not infer a model signature: %s", exc)
 
-    uri = f"runs:/{run_id or mlflow.active_run().info.run_id}/model"
-    version = mlflow.register_model(uri, REGISTERED_MODEL)
+    model_uri = _log_sklearn_model(model, example=example, signature=signature)
+
+    # The raw joblib and its metadata go up alongside it: the SageMaker
+    # container loads those directly and does not speak MLflow.
+    if model_dir is not None:
+        mlflow.log_artifacts(str(Path(model_dir)), artifact_path="artifacts")
+
+    version = mlflow.register_model(model_uri, REGISTERED_MODEL)
 
     client = MlflowClient()
     client.set_model_version_tag(REGISTERED_MODEL, version.version, "promoted", str(promote))
@@ -229,20 +302,20 @@ def register(model_dir: Path | str, evaluation: dict, run_id: str | None = None)
     client.update_model_version(
         REGISTERED_MODEL, version.version,
         description=f"RMSE {evaluation['model']['rmse']:.6f} against baseline "
-                    f"{evaluation['baseline']['rmse']:.6f} — {reason}",
+                    f"{evaluation['baseline']['rmse']:.6f} - {reason}",
     )
 
-    decision |= {"registered": True, "version": version.version}
+    decision |= {"registered": True, "version": version.version, "model_uri": model_uri}
 
     if promote:
         # An alias, not a stage: stages are deprecated in MLflow, and an alias
-        # says what the deployment actually reads rather than what phase of a
+        # names what the deployment actually reads rather than what phase of a
         # process somebody thinks the model is in.
         client.set_registered_model_alias(REGISTERED_MODEL, "champion", version.version)
         decision["promoted"] = True
-        log.info("version %s promoted to champion — %s", version.version, reason)
+        log.info("version %s promoted to champion - %s", version.version, reason)
     else:
-        log.info("version %s registered but NOT promoted — %s", version.version, reason)
+        log.info("version %s registered but NOT promoted - %s", version.version, reason)
 
     return decision
 

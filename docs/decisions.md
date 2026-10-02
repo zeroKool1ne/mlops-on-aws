@@ -159,13 +159,15 @@ that rule is it worth anything.
 
 ## ADR-9 — MLflow locally rather than a central tracking server
 
-**Chosen:** MLflow with a file-based backend store and S3 as the artifact store; `mlruns/` is synchronised to S3
+**Chosen:** MLflow with a **SQLite** backend store and S3 as the artifact store — a local file on disk, not a running service
 
-**Alternatives:** MLflow tracking server on EC2 or Fargate · SageMaker managed MLflow · SageMaker Experiments instead of MLflow · no tracking at all
+**Alternatives:** MLflow tracking server on EC2 or Fargate · SageMaker managed MLflow · SageMaker Experiments instead of MLflow · the plain `mlruns/` file store · no tracking at all
 
 **Reasoning.** A central tracking server needs a host that runs continuously. That costs money and contradicts the consistently serverless line taken in ADR-4, where even the daily cron job was denied its own server. On a solo project there is no team that needs to look at the same runs, so the main benefit of a server disappears. Comprehensive experiment tracking is achieved just as well locally, as long as artifacts land in S3 and are therefore durable and shareable. MLflow rather than SageMaker Experiments because it is vendor-neutral.
 
-**Trade-off.** SageMaker training jobs run on remote instances and cannot write directly into a local MLflow — metrics have to be collected after the run. The web UI only runs on one machine, so nobody else sees runs live. With a team or parallel experiments, a central server would be the right call.
+**Amended during implementation.** This decision originally specified the plain `mlruns/` file store. That turned out to be wrong on two counts, and both were only visible once the code ran. MLflow 3 puts the filesystem backend into maintenance mode and raises an exception unless it is explicitly opted back into. More decisively, **the Model Registry has never worked on the file store at all** — it requires a database backend. Since the promotion gate in this project *is* a registry alias, the file store could not have delivered what this ADR promises. SQLite is the smallest thing that satisfies the requirement, and it changes nothing about the argument above: it is a single file on disk, so there is still no server running around the clock. The migration path to a real server is one environment variable, `MLFLOW_TRACKING_URI`.
+
+**Trade-off.** SQLite serialises writes, so genuinely parallel training runs would contend on the database — irrelevant for one run a day, disqualifying for a team running sweeps. SageMaker training jobs run on remote instances and cannot write directly into a local MLflow — metrics have to be collected after the run. The web UI only runs on one machine, so nobody else sees runs live. With a team or parallel experiments, a central server would be the right call.
 
 **In plain terms.** Every training result is recorded and traceable — without another server running around the clock to make that possible.
 
@@ -224,3 +226,36 @@ that rule is it worth anything.
 **Trade-off.** Container Lambdas have slower cold starts than ZIP Lambdas, an estimated one to several seconds extra; the endpoint is warmed once before the demo. It also ties the presentation to application availability, so the page is built to print cleanly and a PDF is kept as a fallback. Under sustained high load, Fargate would be the more appropriate runtime.
 
 **In plain terms.** The same application runs on the laptop, in the container and in the cloud — there is only one version to maintain.
+
+---
+
+## ADR-14 — The drift threshold is measured, not borrowed
+
+**Chosen:** Each feature carries its own PSI noise floor, measured walk-forward on the training data. A feature is flagged when its live PSI exceeds a multiple of **its own** floor — not when it exceeds a universal 0.25.
+
+**Alternatives:** The conventional fixed PSI thresholds of 0.10 / 0.25 · a wider comparison window · fewer histogram bins · drop PSI and monitor prediction error instead · no drift monitoring
+
+**Reasoning.** The 0.10 / 0.25 thresholds come from credit scoring, where the monitored quantity is an independent draw per customer. Almost nothing here is. `gold_vol20` is a 20-day rolling standard deviation, so two consecutive values share nineteen of their twenty observations and are nearly identical. A one-year window of it contains on the order of a dozen independent observations, not 250. PSI assumes independent samples; fed overlapping ones, it reports its own variance as a finding.
+
+This was not a theoretical worry. It was found by a test written against the real feature set, and the numbers are unambiguous. Measured on data where nothing has broken:
+
+| Feature | Noise floor (95th pct) |
+|---|---|
+| `gold_vol20` | 3.62 |
+| `gold_vol10` | 2.26 |
+| `gold_vol5` | 0.78 |
+| `gold_ret_lag3` | 0.23 |
+| `dxy_ret` | 0.18 |
+
+The floors span 0.176 to 4.769 — a factor of 27 between features in the same model. **For 20 of the 27 monitored features, the conventional 0.25 threshold sits *below* the level that feature produces when nothing has happened at all.** Deployed as originally specified, this monitor would have raised a significant-drift alarm on its first run and every run after it, forever, and the one real alarm would have been indistinguishable from the twenty fake ones.
+
+Two further defects were found and fixed at the same time:
+
+- **Calendar features had to be excluded entirely.** `month` is a deterministic function of the date. Any window shorter than a year covers part of the year against a reference covering all of it, which scored a PSI around 9.0 — permanently. Drift in the calendar is not a finding, it is arithmetic.
+- **The floor has to be measured walk-forward.** The obvious method — slide a window through the reference period and score each position against the full reference — underestimates it, because those windows helped form the reference distribution and are therefore unfairly easy. The live window never is: it is always the period after the reference ends. Measuring in-sample gave a floor of 0.28 for `gold_vol20` where the honest walk-forward figure is 3.62, a thirteen-fold difference, and the calibration still cried wolf until this was corrected.
+
+**Trade-off.** Three real costs. The floors are estimated from overlapping windows, so they are an estimate and not a confidence bound — the percentile is indicative. A feature whose normal behaviour is genuinely erratic gets a high floor and therefore a high bar, so a real shift in it is detected later than in a quiet feature; that is the correct trade for alert fatigue, but it is a trade. And the reference is now more expensive to build, because every feature needs a walk-forward sweep rather than a single histogram.
+
+**What would be better.** PSI on engineered features is a proxy for the thing that actually matters, which is whether predictions have got worse. Here the labels arrive with a one-day lag, so prediction error *could* be monitored directly — that is strictly the stronger signal and the right next step. It is not in this version because it needs prediction history accumulated over months, and this project is three weeks old.
+
+**In plain terms.** We measured how much our own alarm goes off when nothing is wrong, and set it above that. The standard threshold everyone quotes would have made it ring every single day.

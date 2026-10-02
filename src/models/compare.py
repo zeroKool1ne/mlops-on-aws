@@ -21,6 +21,7 @@ Protocol:
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -164,16 +165,58 @@ def summarise(results: pd.DataFrame) -> pd.DataFrame:
 
 
 def run_target(frame: pd.DataFrame, feature_cols: list[str], target: str) -> pd.DataFrame:
+    """Score every candidate for one target, and record the whole comparison.
+
+    Each candidate gets its own nested MLflow run, so the registry holds the
+    models that lost as well as the one that won. A comparison that only keeps
+    its winner is not a comparison afterwards - there is nothing left to show
+    that the choice was made on evidence.
+    """
+    from src.models import tracking
+
     print(f"\n{'=' * 64}")
     print(f"TARGET: {target}")
     print("=" * 64)
 
-    summary = summarise(cross_validate(frame, feature_cols, target))
+    results = cross_validate(frame, feature_cols, target)
+    summary = summarise(results)
     print(summary.to_string(float_format=lambda v: f"{v:10.5f}"))
 
     candidates = summary.drop(index=[i for i in summary.index if i.startswith("baseline")])
     best = candidates["rmse"].idxmin()
     margin = summary.loc[best, "vs_baseline_%"]
+
+    with tracking.run(f"compare-{target}", target=target) as parent:
+        tracking.log_params({
+            "protocol": "walk-forward TimeSeriesSplit",
+            "n_splits": N_SPLITS,
+            "holdout_days": HOLDOUT_DAYS,
+            "n_features": len(feature_cols),
+            "n_rows": len(frame),
+            "cv_start": str(frame.index[0].date()),
+            "cv_end": str(frame.index[-1].date()),
+        })
+        tracking.log_table(summary, f"comparison_{target}.csv")
+        tracking.log_table(results, f"folds_{target}.csv")
+
+        for name in summary.index:
+            row = summary.loc[name]
+            with tracking.run(f"{target}:{name}", target=target, nested=bool(parent)):
+                tracking.log_params({"model": name, "is_baseline": name.startswith("baseline")})
+                tracking.log_metrics({
+                    "rmse": row["rmse"],
+                    "mae": row["mae"],
+                    "dir_acc": row["dir_acc"],
+                    "vs_baseline_pct": row["vs_baseline_%"],
+                })
+
+        tracking.log_metrics({
+            "best_rmse": summary.loc[best, "rmse"],
+            "best_vs_baseline_pct": margin,
+        })
+        if parent is not None:
+            import mlflow
+            mlflow.set_tags({"best_model": best, "beats_baseline": str(margin > 0)})
 
     print(f"\nBest candidate : {best}")
     print(f"Beats baseline : {'YES' if margin > 0 else 'NO'}  ({margin:+.2f}%)")
@@ -200,11 +243,18 @@ def main() -> None:
     print(f"Holdout        : {holdout_frame.index[0].date()} to {holdout_frame.index[-1].date()}"
           f"  ({len(holdout_frame)} days, untouched)")
 
-    for target in TARGETS:
-        run_target(train_frame, feature_cols, target)
+    summaries = {t: run_target(train_frame, feature_cols, t) for t in TARGETS}
 
     print("\nRMSE and MAE are in return units: 0.01 = one percent.")
     print("dir_acc 0.50 = coin flip; it is undefined for volatility.")
+
+    # Written out so the README reports measured numbers rather than numbers
+    # retyped from a terminal that has since scrolled away.
+    out_dir = Path("artifacts/comparison")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for target, summary in summaries.items():
+        summary.to_csv(out_dir / f"{target}.csv")
+    print(f"\nwrote {out_dir}/{{{','.join(TARGETS)}}}.csv")
 
 
 if __name__ == "__main__":

@@ -51,6 +51,33 @@ def directional_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(np.mean(np.sign(y_pred[mask]) == np.sign(y_true[mask])))
 
 
+def write_drift_reference(frame: pd.DataFrame, features: list[str], out_dir: Path) -> Path:
+    """Freeze the distribution the newly promoted model was trained on.
+
+    Called only after a promotion. Rewriting this on every training run would
+    silently reset the drift measurement, after which it could never show
+    anything again - and the dashboard would stay green while the model decayed
+    (ADR-12).
+    """
+    from src.monitoring.drift import build_reference
+    from src.monitoring.handler import CALENDAR_FEATURES, CURRENT_WINDOW
+
+    # Calendar features are excluded from the reference as well as from the
+    # comparison. Storing a distribution nothing will ever be compared against
+    # would only invite someone to compare against it later.
+    monitored = [f for f in features if f not in CALENDAR_FEATURES]
+
+    # The calibration window must equal the one the live check uses, or the
+    # measured noise floor describes a different measurement than the one it
+    # will be compared against (ADR-14).
+    reference = build_reference(frame, monitored, window=CURRENT_WINDOW)
+    path = out_dir / "drift_reference.json"
+    path.write_text(json.dumps(reference, indent=2))
+    print(f"wrote {path} ({len(reference['features'])} features, "
+          f"window {reference['window'][0]} to {reference['window'][1]})")
+    return path
+
+
 def main() -> None:
     from src.models.train import (METADATA_FILENAME, MODEL_FILENAME, build_target,
                                   load_training_frame)
@@ -68,7 +95,8 @@ def main() -> None:
     frame = load_training_frame(args.data_dir, args.fetch_if_missing)
     holdout = frame.iloc[-args.holdout_days:]
 
-    X = holdout[features].to_numpy()
+    # DataFrame, so the estimator checks the column names it was fitted with.
+    X = holdout[features]
     y_true = build_target(holdout, target)
     y_pred = model.predict(X)
 
@@ -115,6 +143,35 @@ def main() -> None:
 
     print(json.dumps({k: v for k, v in metrics.items() if k != "regression_metrics"}, indent=2))
     print(f"\nwrote {out_dir / 'evaluation.json'}")
+
+    # Evaluation is the step the registry's gate reads, so this is where the
+    # model is registered and where promotion is decided - not in training.
+    # A model that has not been scored has not earned a version number.
+    from src.models import tracking
+
+    with tracking.run(f"evaluate-{target}", target=target) as active:
+        tracking.log_metrics({
+            "holdout_rmse": metrics["model"]["rmse"],
+            "holdout_mae": metrics["model"]["mae"],
+            "baseline_rmse": metrics["baseline"]["rmse"],
+            "baseline_mae": metrics["baseline"]["mae"],
+            "improvement_over_baseline_pct": improvement,
+        })
+        if metrics["model"]["directional_accuracy"] is not None:
+            tracking.log_metrics({"directional_accuracy": metrics["model"]["directional_accuracy"]})
+
+        tracking.log_artifacts([out_dir / "evaluation.json"], subdir="evaluation")
+
+        # A handful of real rows as the input example: MLflow stores them with
+        # the model, so the expected schema travels with the artifact.
+        decision = tracking.register(model, metrics, model_dir=model_dir,
+                                     example=holdout[features].head(5))
+        print("\nregistry:", json.dumps(decision, indent=2))
+
+        # The drift reference belongs to the model that is actually live, so it
+        # is rewritten only on promotion and never on every run (ADR-12).
+        if decision.get("promoted"):
+            write_drift_reference(frame.iloc[:-args.holdout_days], features, out_dir)
 
     if not metrics["meets_promotion_threshold"]:
         print(f"\nNOT promotable: {improvement:+.2f}% is below the "

@@ -12,19 +12,25 @@
 resource "aws_cloudwatch_metric_alarm" "drift" {
   alarm_name        = "${var.project}-data-drift"
   alarm_description = <<-TEXT
-    Maximum feature PSI crossed 0.25 — the incoming data has moved away from
-    the distribution the running model was trained on. Review the drift report
-    in s3://${aws_s3_bucket.data.id}/monitoring/reports/ before retraining:
-    a genuine regime change calls for a new model, a broken feed calls for a fix.
+    A feature moved more than 3x as far as it normally does — measured against
+    its own walk-forward noise floor, not an absolute PSI (ADR-14). The incoming
+    data has left the distribution the running model was trained on. Review the
+    drift report in s3://${aws_s3_bucket.data.id}/monitoring/reports/ before
+    retraining: a genuine regime change calls for a new model, a broken feed
+    calls for a fix.
   TEXT
 
   namespace   = "GoldMLOps"
-  metric_name = "MaxFeaturePSI"
+  metric_name = "MaxDriftRatio"
   statistic   = "Maximum"
   period      = 86400 # one day, matching how often the metric is produced
 
+  # Three times the feature's OWN measured noise floor, not an absolute PSI.
+  # The conventional 0.25 sits below the noise floor of 20 of the 27 monitored
+  # features, so an alarm on raw PSI would have fired every day forever
+  # (ADR-14).
   comparison_operator = "GreaterThanThreshold"
-  threshold           = 0.25
+  threshold           = 3.0
   evaluation_periods  = 1
 
   # The metric only exists on days the check ran. Treating a missing day as
@@ -139,20 +145,19 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type = "metric", x = 0, y = 2, width = 12, height = 6
         properties = {
-          title  = "Feature drift (PSI) — alarm at 0.25"
+          title  = "Feature drift — multiples of each feature's own noise floor (ADR-14)"
           view   = "timeSeries"
           region = var.region
           period = 86400
           stat   = "Maximum"
           metrics = [
-            ["GoldMLOps", "MaxFeaturePSI", { label = "worst feature" }],
-            ["GoldMLOps", "MeanFeaturePSI", { label = "average" }],
+            ["GoldMLOps", "MaxDriftRatio", { label = "worst feature, x its own noise floor" }],
           ]
           yAxis = { left = { min = 0 } }
           annotations = {
             horizontal = [
-              { value = 0.10, label = "moderate", color = "#e7b416" },
-              { value = 0.25, label = "significant", color = "#d13212" },
+              { value = 1.5, label = "moderate", color = "#e7b416" },
+              { value = 3.0, label = "significant", color = "#d13212" },
             ]
           }
         }
@@ -203,7 +208,22 @@ resource "aws_cloudwatch_dashboard" "main" {
         }
       },
       {
-        type = "log", x = 0, y = 14, width = 24, height = 6
+        type = "metric", x = 0, y = 14, width = 24, height = 6
+        properties = {
+          title  = "Raw PSI — kept so the ratio above can be audited"
+          view   = "timeSeries"
+          region = var.region
+          period = 86400
+          stat   = "Maximum"
+          metrics = [
+            ["GoldMLOps", "MaxFeaturePSI", { label = "worst feature, raw PSI" }],
+            ["GoldMLOps", "MeanFeaturePSI", { label = "average, raw PSI" }],
+            ["GoldMLOps", "DriftingFeatures", { label = "features flagged", yAxis = "right" }],
+          ]
+        }
+      },
+      {
+        type = "log", x = 0, y = 20, width = 24, height = 6
         properties = {
           title  = "API errors, most recent first"
           region = var.region

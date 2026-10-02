@@ -68,6 +68,24 @@ def classify(score: float) -> str:
     return "significant"
 
 
+# How many times its own noise floor a feature has to move before it counts.
+# Not derived either, but it is calibrated per feature rather than borrowed
+# whole from another field.
+RATIO_MODERATE = 1.5
+RATIO_SIGNIFICANT = 3.0
+
+
+def classify_ratio(ratio: float) -> str:
+    """Verdict relative to the feature's measured noise floor (ADR-14)."""
+    if not np.isfinite(ratio):
+        return "unknown"
+    if ratio < RATIO_MODERATE:
+        return "stable"
+    if ratio < RATIO_SIGNIFICANT:
+        return "moderate"
+    return "significant"
+
+
 def compare(reference: pd.DataFrame, current: pd.DataFrame,
             columns: list[str] | None = None) -> pd.DataFrame:
     """Score every feature with both measures.
@@ -99,13 +117,71 @@ def compare(reference: pd.DataFrame, current: pd.DataFrame,
     return pd.DataFrame(rows).sort_values("psi", ascending=False).reset_index(drop=True)
 
 
+def noise_floor(frame: pd.DataFrame, col: str, window: int,
+                bins: int = DEFAULT_BINS, percentile: float = 95.0) -> float:
+    """How large a PSI this feature produces when NOTHING has happened.
+
+    This is the number the 0.25 convention is missing. That threshold comes
+    from credit scoring, where the monitored quantity is an independent draw
+    per customer. Here most features are rolling statistics - gold_vol20 is a
+    20-day standard deviation, so consecutive values share 19 of 20
+    observations. A one-year window holds on the order of a dozen independent
+    observations, not 250, and a slowly wandering process compared against its
+    own long history legitimately looks "drifted" without anything breaking.
+
+    Measured **walk-forward**, which matters more than it looks. The obvious
+    approach - slide a window through the reference period and score each
+    position against the full reference - underestimates the floor, because
+    those windows are part of what formed the reference distribution in the
+    first place and are therefore unfairly easy. The live window never is: it
+    is always the period *after* the reference ends.
+
+    So each sample here is built the way the live comparison is built. A
+    reference is fitted on everything before a split point, and the window
+    immediately after it is scored against that. The spread of those scores is
+    what "nothing has happened, but time has passed" actually costs.
+
+    The windows overlap, so the samples are not independent and the percentile
+    is an estimate rather than a confidence bound. It is still a measurement of
+    this feature on this data, rather than a constant borrowed from another
+    field. See ADR-14.
+    """
+    values = frame[col].dropna().to_numpy(dtype=float)
+
+    # One reference period plus one scored window, at the very least. Below
+    # that there is nothing to walk forward over.
+    if len(values) < window * 2:
+        return float("nan")
+
+    step = max(window // 4, 1)
+    scores: list[float] = []
+
+    for split in range(window, len(values) - window + 1, step):
+        past, future = values[:split], values[split:split + window]
+
+        edges = np.unique(np.percentile(past, np.linspace(0, 100, bins + 1)))
+        if len(edges) < 3:
+            continue
+
+        ref_pct = np.clip(np.histogram(past, bins=edges)[0] / len(past), 1e-6, None)
+        clipped = np.clip(future, edges[0], edges[-1])
+        cur_pct = np.clip(np.histogram(clipped, bins=edges)[0] / len(clipped), 1e-6, None)
+        scores.append(float(np.sum((cur_pct - ref_pct) * np.log(cur_pct / ref_pct))))
+
+    return float(np.percentile(scores, percentile)) if scores else float("nan")
+
+
 def build_reference(frame: pd.DataFrame, columns: list[str],
-                    bins: int = DEFAULT_BINS) -> dict:
+                    bins: int = DEFAULT_BINS, window: int | None = None) -> dict:
     """Freeze a reference snapshot for later comparison.
 
     Stores only the distribution shape - bin edges and shares - never the raw
     data. Written to S3 when a model is promoted, never on every training run
     (ADR-12), otherwise the measurement silently resets itself.
+
+    Each feature also carries its own measured noise floor (see `noise_floor`
+    and ADR-14), so that the live comparison can ask "is this more than this
+    feature normally does" rather than "is this above 0.25".
     """
     features = {}
     for col in columns:
@@ -114,17 +190,40 @@ def build_reference(frame: pd.DataFrame, columns: list[str],
             continue
         edges = np.unique(np.percentile(values, np.linspace(0, 100, bins + 1)))
         shares = np.histogram(values, bins=edges)[0] / len(values)
-        features[col] = {
+        entry = {
             "bin_edges": edges.tolist(),
             "bin_shares": shares.round(6).tolist(),
         }
+        if window:
+            floor = noise_floor(frame, col, window, bins)
+            if np.isfinite(floor):
+                entry["psi_noise_floor"] = round(floor, 4)
+        features[col] = entry
 
     return {
-        "created_at": pd.Timestamp.utcnow().isoformat(),
+        # Timestamp.utcnow() is deprecated in pandas 4.
+        "created_at": pd.Timestamp.now("UTC").isoformat(),
         "n_rows": int(len(frame)),
-        "window": [str(frame.index[0].date()), str(frame.index[-1].date())],
+        "window": _index_window(frame),
+        "calibration_window": window,
         "features": features,
     }
+
+
+def _index_window(frame: pd.DataFrame) -> list[str]:
+    """First and last index label, as dates when the index carries dates.
+
+    The production frame is always indexed by trading day, but this function
+    has no business crashing on a frame that is not - a reference built from a
+    plain integer index is still a valid reference, and losing the whole
+    snapshot over a label format would be the wrong trade.
+    """
+    if len(frame) == 0:
+        return []
+    first, last = frame.index[0], frame.index[-1]
+    if isinstance(frame.index, pd.DatetimeIndex):
+        return [str(first.date()), str(last.date())]
+    return [str(first), str(last)]
 
 
 def psi_from_reference(stored: dict, current: np.ndarray) -> float:
@@ -165,17 +264,32 @@ def compare_to_reference(reference: dict, current: pd.DataFrame) -> pd.DataFrame
             continue
         values = current[col].dropna().to_numpy(dtype=float)
         score = psi_from_reference(stored, values)
+        floor = stored.get("psi_noise_floor")
+
+        # Judge against the feature's own measured floor where one exists, and
+        # fall back to the absolute convention where it does not. The raw PSI
+        # is reported either way, so the judgement can always be re-derived.
+        if floor and np.isfinite(score):
+            ratio = score / max(floor, 1e-6)
+            verdict = classify_ratio(ratio)
+        else:
+            ratio, verdict = None, classify(score)
+
         rows.append({
             "feature": col,
             "psi": round(score, 4) if np.isfinite(score) else None,
-            "verdict": classify(score),
+            "noise_floor": floor,
+            "ratio": round(ratio, 3) if ratio is not None else None,
+            "verdict": verdict,
             "n_current": int(len(values)),
         })
 
     frame = pd.DataFrame(rows)
     if frame.empty:
         return frame
-    return frame.sort_values("psi", ascending=False, na_position="last").reset_index(drop=True)
+    has_ratio = "ratio" in frame.columns and frame["ratio"].notna().any()
+    return frame.sort_values("ratio" if has_ratio else "psi",
+                             ascending=False, na_position="last").reset_index(drop=True)
 
 
 def summarise(scores: pd.DataFrame) -> dict:
@@ -189,14 +303,26 @@ def summarise(scores: pd.DataFrame) -> dict:
         return {"status": "unknown", "reason": "no comparable features"}
 
     usable = scores.dropna(subset=["psi"])
+    if usable.empty:
+        return {"status": "unknown", "reason": "no feature produced a usable score"}
+
     counts = usable["verdict"].value_counts().to_dict()
-    worst = usable.iloc[0] if not usable.empty else None
+
+    # Rank by ratio where it exists, because that is what the verdict is based
+    # on. Sorting by raw PSI would put the noisiest feature on top rather than
+    # the one that has moved most relative to its own normal behaviour.
+    has_ratio = "ratio" in usable.columns and usable["ratio"].notna().any()
+    ranked = usable.sort_values("ratio" if has_ratio else "psi",
+                                ascending=False, na_position="last")
+    worst = ranked.iloc[0]
 
     return {
-        "status": classify(float(worst["psi"])) if worst is not None else "unknown",
-        "max_psi": float(worst["psi"]) if worst is not None else None,
-        "worst_feature": str(worst["feature"]) if worst is not None else None,
-        "mean_psi": round(float(usable["psi"].mean()), 4) if not usable.empty else None,
+        "status": str(worst["verdict"]),
+        "max_psi": float(worst["psi"]),
+        "max_ratio": float(worst["ratio"]) if pd.notna(worst.get("ratio")) else None,
+        "noise_floor": float(worst["noise_floor"]) if pd.notna(worst.get("noise_floor")) else None,
+        "worst_feature": str(worst["feature"]),
+        "mean_psi": round(float(usable["psi"].mean()), 4),
         "n_features": int(len(usable)),
         "n_significant": int(counts.get("significant", 0)),
         "n_moderate": int(counts.get("moderate", 0)),

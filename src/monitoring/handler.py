@@ -28,9 +28,37 @@ REFERENCE_KEY = "monitoring/reference/current.json"
 FEATURES_KEY = "features/latest/training.parquet"
 METRIC_NAMESPACE = "GoldMLOps"
 
-# How many recent trading days count as "now". Sixty is about three months:
-# long enough for a stable PSI estimate, short enough to still be current.
-CURRENT_WINDOW = 60
+# Features that are deterministic functions of the calendar, not of the market.
+# They are EXCLUDED from drift monitoring, and that exclusion is not a
+# convenience - it is a correctness fix. Any window shorter than a year covers
+# only part of the year, so `month` compared against a multi-year reference
+# scores a PSI around 9.0 forever. Left in, this monitor would have raised a
+# significant-drift alarm every single morning from the day it was deployed,
+# and the one real alarm would have been indistinguishable from the noise.
+CALENDAR_FEATURES = frozenset({"month", "day_of_week"})
+
+# How many recent trading days count as "now". One year, not the three months
+# this started as.
+#
+# The reason is effective sample size. Most features here are rolling
+# statistics - gold_vol20 is a 20-day standard deviation, so consecutive values
+# overlap in 19 of 20 observations and are almost identical. Sixty rows of it
+# contain roughly three independent observations, not sixty. PSI assumes
+# independent samples, so at a 60-day window it is not measuring drift, it is
+# measuring its own variance.
+#
+# Measured on data known to be stable (the same series, a different window):
+#
+#     window    max PSI on stable data
+#      30 days          4.53
+#      60 days          1.55
+#     120 days          0.94
+#     180 days          0.79
+#     250 days          0.13
+#
+# The 0.25 threshold only separates signal from noise at the bottom of that
+# table. See ADR-14.
+CURRENT_WINDOW = 250
 
 
 def _s3():
@@ -65,14 +93,20 @@ def publish_metrics(summary: dict) -> None:
     if summary.get("max_psi") is None:
         return
 
-    boto3.client("cloudwatch").put_metric_data(
-        Namespace=METRIC_NAMESPACE,
-        MetricData=[
-            {"MetricName": "MaxFeaturePSI", "Value": summary["max_psi"], "Unit": "None"},
-            {"MetricName": "MeanFeaturePSI", "Value": summary["mean_psi"], "Unit": "None"},
-            {"MetricName": "DriftingFeatures", "Value": summary["n_significant"], "Unit": "Count"},
-        ],
-    )
+    data = [
+        {"MetricName": "MaxFeaturePSI", "Value": summary["max_psi"], "Unit": "None"},
+        {"MetricName": "MeanFeaturePSI", "Value": summary["mean_psi"], "Unit": "None"},
+        {"MetricName": "DriftingFeatures", "Value": summary["n_significant"], "Unit": "Count"},
+    ]
+
+    # The alarm is built on the ratio, not the raw PSI. A raw PSI of 7.6 is
+    # normal for gold_vol20 and alarming for dxy_ret, so one threshold across
+    # both is meaningless (ADR-14). The absolute values stay on the dashboard
+    # because they are what makes the ratio auditable.
+    if summary.get("max_ratio") is not None:
+        data.append({"MetricName": "MaxDriftRatio", "Value": summary["max_ratio"], "Unit": "None"})
+
+    boto3.client("cloudwatch").put_metric_data(Namespace=METRIC_NAMESPACE, MetricData=data)
 
 
 def notify(topic_arn: str, summary: dict, report_uri: str) -> None:
@@ -80,19 +114,25 @@ def notify(topic_arn: str, summary: dict, report_uri: str) -> None:
 
     boto3.client("sns").publish(
         TopicArn=topic_arn,
-        Subject=f"[GoldMLOps] {summary['status']} data drift — PSI {summary['max_psi']:.3f}",
+        Subject=f"[GoldMLOps] {summary['status']} data drift — "
+                f"{summary['worst_feature']} at {summary.get('max_ratio', 0):.1f}x its noise floor",
         Message="\n".join([
             f"Status          {summary['status']}",
-            f"Worst feature   {summary['worst_feature']} (PSI {summary['max_psi']:.4f})",
+            f"Worst feature   {summary['worst_feature']}",
+            f"  PSI           {summary['max_psi']:.4f}",
+            f"  noise floor   {summary.get('noise_floor')}",
+            f"  ratio         {summary.get('max_ratio')}x",
             f"Significant     {summary['n_significant']} of {summary['n_features']} features",
             f"Moderate        {summary['n_moderate']}",
             "",
             f"Full report     {report_uri}",
             "",
-            "PSI above 0.25 means the incoming data has moved away from what the",
-            "running model was trained on. Review the report before retraining:",
-            "a genuine market regime change calls for a new model, a broken data",
-            "feed calls for a fix.",
+            "The ratio is the PSI divided by what this feature scores when nothing",
+            "has happened, measured walk-forward on the training data (ADR-14). A",
+            "ratio above 3 means this feature has moved more than three times as far",
+            "as it normally does. Review the report before retraining: a genuine",
+            "market regime change calls for a new model, a broken data feed calls",
+            "for a fix.",
         ]),
     )
 
@@ -105,7 +145,9 @@ def check(bucket: str, topic_arn: str | None = None) -> dict:
     if reference is None:
         return {"status": "unknown", "reason": "no reference stored — promote a model first"}
 
-    scores = compare_to_reference(reference, load_current(bucket))
+    current = load_current(bucket)
+    scores = compare_to_reference(reference, current.drop(columns=list(CALENDAR_FEATURES),
+                                                          errors="ignore"))
     summary = summarise(scores)
     summary["reference_window"] = reference["window"]
     summary["checked_at"] = date.today().isoformat()

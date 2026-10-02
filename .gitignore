@@ -42,3 +42,6 @@ artifacts/
 mlflow.db
 mlartifacts/
 mlruns/
+
+# Written by infra/manual/first-lambda-ingest-call.sh
+response.json

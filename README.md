@@ -1,6 +1,7 @@
 # Gold/USD Price Forecasting — End-to-End MLOps on AWS
 
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
+![Status](https://img.shields.io/badge/status-deployed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-55%20passing-brightgreen)
 ![Python](https://img.shields.io/badge/python-3.13-blue)
 ![AWS](https://img.shields.io/badge/AWS-SageMaker%20%7C%20Lambda%20%7C%20API%20Gateway-orange)
 ![IaC](https://img.shields.io/badge/IaC-Terraform-purple)
@@ -85,9 +86,106 @@ cd docs/diagrams && ../../.venv/bin/python architecture.py
 
 ## Results
 
-> Not yet available — models have not been trained at the time of writing.
-> This section will report RMSE and MAE for every candidate model against the naive
-> baseline, with the evaluation protocol stated in full.
+Two questions were asked of the same data, the same features and the same
+validation protocol. One has a usable answer and one does not, and both are
+reported.
+
+### Protocol
+
+The last **126 trading days** (2026-04-02 to 2026-10-01) were set aside and
+touched once, at the very end. Everything before that was used for
+walk-forward cross-validation with `TimeSeriesSplit`, five folds, never
+shuffled — shuffling would train on the future and test on the past, which
+inflates every metric it touches. 2,493 rows, 29 features, ten years of data.
+
+Every candidate is scored against a **naive baseline**. For returns that is a
+forecast of exactly zero (*"tomorrow equals today"*), the strongest naive
+forecast there is for a near-random walk. For volatility it is the mean
+volatility seen during training, because zero would be absurd — markets always
+move.
+
+### Can we predict *which way* gold moves tomorrow? No.
+
+Cross-validated; lower RMSE is better:
+
+| Model | RMSE | MAE | Directional accuracy | vs baseline |
+|---|---|---|---|---|
+| **baseline (zero)** | 0.01064 | 0.00761 | 54.6 % | — |
+| random forest | 0.01073 | 0.00771 | 49.3 % | **−0.80 %** |
+| ridge | 0.01094 | 0.00792 | 51.3 % | −2.81 % |
+| XGBoost | 0.01104 | 0.00797 | 50.5 % | −3.76 % |
+| LightGBM | 0.01105 | 0.00801 | 49.7 % | −3.81 % |
+
+**Not one of the four beats doing nothing.** Directional accuracy sits between
+49 % and 51 % — a coin flip. The baseline's 54.6 % is not skill either: it
+predicts the mean, the mean is positive, and gold rose over the period, so
+"always up" happened to be right 54.6 % of the time.
+
+This is the result ADR-10 predicted and accepted in advance: *an honest weak
+result is worth more than an impressive one built on autocorrelation.*
+Regressing on the price level instead would have produced an R² near 0.99 and
+meant nothing, because today's price is almost yesterday's price.
+
+### Can we predict *how violently* it moves tomorrow? Yes, modestly.
+
+| Model | RMSE | MAE | vs baseline |
+|---|---|---|---|
+| **random forest** | **0.00745** | 0.00511 | **+3.51 %** |
+| XGBoost | 0.00758 | 0.00534 | +1.77 % |
+| LightGBM | 0.00771 | 0.00535 | +0.07 % |
+| baseline (mean) | 0.00772 | 0.00517 | — |
+| ridge | 0.00787 | 0.00539 | −1.98 % |
+
+Random forest wins and clears the 2 % promotion gate. On the untouched
+holdout:
+
+| | Model | Baseline | Difference |
+|---|---|---|---|
+| **RMSE** | 0.009580 | 0.009866 | **+2.90 %** |
+| **MAE** | 0.007551 | 0.007166 | **−5.38 %** |
+
+**Those two disagree, and that matters.** The model makes *fewer large misses*
+at the cost of a *larger typical error*. For a volatility forecast that is the
+trade worth making — the day the model calls quiet and the market is not is the
+day that costs money — so the promotion gate decides on RMSE. But it is a real
+blind spot: nothing in the gate would stop a model making that trade far too
+aggressively, so the gate now states the disagreement out loud instead of
+reporting a clean win.
+
+### What the model actually uses
+
+Three importance measures, because each answers a different question:
+
+| Feature | mean \|SHAP\| | Direction | Permutation |
+|---|---|---|---|
+| `gold_vol20` | 0.00154 | +0.90 | −0.00006 |
+| `gold_range` | 0.00100 | +0.91 | −0.00012 |
+| `gold_vol10` | 0.00061 | +0.84 | −0.00005 |
+| `gold_ret_mean20` | 0.00035 | +0.76 | −0.00003 |
+| `vix_vol10` | 0.00020 | +0.52 | +0.00005 |
+
+The top three are all *"how much has gold been moving lately"*, each with a
+direction near +0.9: high recent volatility raises the forecast. That is
+**volatility clustering** — a real, long-documented market property, and
+reassuring to find rather than something exotic.
+
+But **permutation importance is negative for almost every feature**: shuffling
+them does not make holdout predictions worse. SHAP says the model leans hard on
+past volatility; permutation says removing it barely hurts. They disagree, and
+that is consistent with a model beating the baseline by three percent rather
+than thirty. Computing only one measure would have hidden it.
+
+![SHAP attribution](artifacts/explain/shap_beeswarm.png)
+
+### What this is worth
+
+A 3 % RMSE improvement over "assume average volatility" is small. It is also
+real, measured on data the model never saw, and reported together with the
+metric that disagrees. The engineering around it — scheduled ingestion, a
+versioned registry with a promotion gate, a calibrated drift monitor, a
+deployed API — is what this project is actually about. A pipeline that can
+honestly tell you the model is barely better than nothing is worth more than
+one that cannot tell.
 
 ## Getting started
 
@@ -111,40 +209,93 @@ pip install -r requirements.txt
 
 ### Running the API locally
 
-> Coming soon — the FastAPI service is not implemented yet.
+```bash
+python -m src.models.train --target volatility --fetch-if-missing
+uvicorn src.api.main:app --reload
+```
+
+Then open <http://127.0.0.1:8000> for the demo page, or
+<http://127.0.0.1:8000/docs> for the generated API documentation.
+
+```bash
+curl -s -X POST localhost:8000/predict \
+  -H 'content-type: application/json' -d '{"date": "2026-09-30"}'
+```
+
+No AWS account is needed for this. `src/api/serving.py` loads the model into
+the process when `SAGEMAKER_ENDPOINT` is unset and forwards to the endpoint
+when it is set — the same code either way.
+
+### Running the tests
+
+```bash
+pytest -q        # 55 tests, no network access required
+```
+
+The suite is deliberately offline: `yfinance` is an unofficial scraper with no
+SLA, so a suite that depends on it fails for reasons unrelated to the code. The
+tests that matter check properties rather than execution — that a feature row
+does not change when future rows are removed (no leakage), that training and
+serving produce identical features for the same day (no train/serve skew), and
+that the drift detector stays quiet on data where nothing happened.
+
+### Reproducing the results above
+
+```bash
+python -m src.models.compare                           # four algorithms, both targets
+python -m src.models.evaluate --fetch-if-missing        # holdout metrics, registers the model
+python -m src.models.explain --fetch-if-missing         # SHAP and permutation importance
+mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metric
+```
 
 ## Project structure
 
 ```
 .
 ├── src/
-│   ├── data/          # ingestion: market data -> S3
-│   ├── features/      # feature engineering pipeline
-│   ├── models/        # training, evaluation, model selection
-│   ├── api/           # FastAPI service + Lambda handlers
-│   └── monitoring/    # drift detection and retraining triggers
-├── notebooks/         # exploratory data analysis
-├── infra/             # Terraform: all AWS resources
+│   ├── api/           # FastAPI app, demo page, Lambda handler, serving backends
+│   ├── data/          # ingestion: fetch + validate -> S3 Parquet
+│   ├── features/      # the one feature pipeline, shared by training and serving
+│   ├── models/        # train, evaluate, compare, explain, tracking + registry
+│   └── monitoring/    # drift detection and the scheduled check
+├── notebooks/         # exploratory data analysis (10y, 2y, 1m windows)
+├── infra/             # Terraform: all 46 AWS resources
 ├── docs/
+│   ├── decisions.md   # 14 architecture decision records
+│   ├── model-card.md  # what the model is, and is not, for
+│   ├── aws-setup.md   # deployment, cost, teardown, troubleshooting
 │   └── diagrams/      # architecture diagrams as code
-├── tests/             # pytest suite
-└── .github/workflows/ # CI/CD
+├── artifacts/         # model, metrics, SHAP output, drift reference
+├── tests/             # 55 tests, offline by design
+├── Dockerfile         # one arm64 image, three Lambda handlers
+└── requirements-api.txt   # runtime deps only, pinned to match training
 ```
 
 ## Documentation
 
 | Document | Contents |
 |---|---|
-| [Architecture decisions](docs/decisions.md) | Every design choice, its alternatives and its trade-off |
-| Model card | Metrics, intended use, limitations, bias considerations — *pending* |
-| AWS setup guide | Infrastructure walkthrough and cost estimate — *pending* |
-| API reference | OpenAPI specification — *pending* |
+| [Architecture decisions](docs/decisions.md) | All 14 design choices, their alternatives and their trade-offs — including the two that turned out wrong and had to be amended |
+| [Model card](docs/model-card.md) | Metrics, intended use, limitations, and what this model must not be used for |
+| [AWS setup guide](docs/aws-setup.md) | Deployment from scratch, verification, measured cost estimate, teardown, troubleshooting |
+| API reference | Generated from the code, served at `/docs` on the running API |
 
 ## Cost
 
-> Pending. This project is deliberately built on serverless components so that idle cost
-> stays near zero: SageMaker Serverless Inference scales to nothing between requests, and
-> no EC2 instance runs continuously. A full estimate will be published here.
+**About $1.60 a month**, idle. Full breakdown in
+[`docs/aws-setup.md`](docs/aws-setup.md#what-it-costs).
+
+Three quarters of that is CloudWatch — the monitoring costs more than the
+compute and storage of the system it monitors. That is the honest shape of a
+small serverless workload. The custom metrics and alarms could be dropped to
+get under $0.30, and then nobody would find out when the model started
+drifting.
+
+What is deliberately absent: no EC2 instance, no NAT gateway ($32/month), no
+Real-Time SageMaker endpoint ($40/month), no RDS, no load balancer, no MLflow
+tracking server. Each was considered and rejected in
+[`docs/decisions.md`](docs/decisions.md); together they are the difference
+between $1.60 and roughly $90.
 
 ## Credits
 

@@ -200,6 +200,18 @@ def log_table(frame, filename: str) -> None:
 # registry
 # --------------------------------------------------------------------------
 
+def mae_improvement(evaluation: dict) -> float | None:
+    """The same comparison on MAE, which the gate does not decide on."""
+    try:
+        model = float(evaluation["model"]["mae"])
+        baseline = float(evaluation["baseline"]["mae"])
+    except (KeyError, TypeError, ValueError):
+        return None
+    if baseline == 0:
+        return None
+    return (1 - model / baseline) * 100
+
+
 def promotion_decision(evaluation: dict) -> tuple[bool, str]:
     """Whether this model should replace the incumbent, and why.
 
@@ -207,15 +219,34 @@ def promotion_decision(evaluation: dict) -> tuple[bool, str]:
     a model that cannot beat "tomorrow equals today" has learned nothing worth
     deploying (ADR-7). Beating it by a margin is the second gate, so that noise
     between runs does not fill the registry with versions nobody chose.
+
+    The decision is made on RMSE alone, deliberately. For a volatility forecast
+    the cost of being wrong is not linear - a day the model called quiet and
+    the market did not is what hurts, and RMSE is the metric that penalises
+    exactly those. But RMSE and MAE can disagree, and when they do the reason
+    string says so rather than letting the gate look unanimous. On the current
+    champion they do disagree: RMSE is 2.9 percent better than the baseline
+    while MAE is 5.4 percent worse, which means this model trades a larger
+    typical error for fewer large misses. That is the intended trade here. It
+    is also a blind spot worth knowing about, because nothing in the gate would
+    stop a model that made that trade far too aggressively.
     """
     if not evaluation.get("beats_baseline", False):
-        return False, "does not beat the naive baseline"
+        return False, "does not beat the naive baseline on RMSE"
 
     margin = evaluation.get("improvement_over_baseline_pct", 0.0)
     if margin < MIN_IMPROVEMENT_PCT:
-        return False, f"beats baseline by only {margin:.2f}% (threshold {MIN_IMPROVEMENT_PCT}%)"
+        return False, (f"beats baseline on RMSE by only {margin:.2f}% "
+                       f"(threshold {MIN_IMPROVEMENT_PCT}%)")
 
-    return True, f"beats baseline by {margin:.2f}%"
+    reason = f"beats baseline on RMSE by {margin:.2f}%"
+
+    mae = mae_improvement(evaluation)
+    if mae is not None and mae < 0:
+        reason += (f"; note MAE is {abs(mae):.2f}% WORSE - fewer large misses "
+                   f"bought with a larger typical error")
+
+    return True, reason
 
 
 def _log_sklearn_model(model, example=None, signature=None) -> str:

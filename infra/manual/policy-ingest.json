@@ -2,10 +2,13 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "WriteRawData",
+            "Sid": "WriteDataLake",
             "Effect": "Allow",
             "Action": "s3:PutObject",
-            "Resource": "arn:aws:s3:::goldmlops-data-686699774218/raw/*"
+            "Resource": [
+                "arn:aws:s3:::goldmlops-data-686699774218/raw/*",
+                "arn:aws:s3:::goldmlops-data-686699774218/features/*"
+            ]
         },
         {
             "Sid": "WriteOwnLogs",

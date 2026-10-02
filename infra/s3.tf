@@ -93,15 +93,16 @@ resource "aws_s3_bucket_lifecycle_configuration" "data" {
   }
 
   # Versioning keeps every overwritten features/latest file forever unless told
-  # otherwise. Ninety days is enough to recover from a mistake and short enough
-  # that the bill does not grow without limit.
+  # otherwise. Thirty days is long enough to recover from a bad ingestion run -
+  # which is noticed within a day or two, not a quarter - and keeps the stored
+  # volume of superseded feature tables bounded.
   rule {
     id     = "expire-old-versions"
     status = "Enabled"
     filter {}
 
     noncurrent_version_expiration {
-      noncurrent_days = 90
+      noncurrent_days = var.noncurrent_version_days
     }
   }
 

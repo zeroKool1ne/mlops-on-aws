@@ -27,7 +27,7 @@ data "aws_iam_policy_document" "lambda_assume" {
 # --------------------------------------------------------------------------
 
 resource "aws_iam_role" "api" {
-  name               = "${var.project}-api-role"
+  name               = "${var.project}-lambda-api"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -75,7 +75,8 @@ resource "aws_iam_role_policy" "api" {
 # --------------------------------------------------------------------------
 
 resource "aws_iam_role" "ingest" {
-  name               = "${var.project}-ingest-role"
+  name               = "${var.project}-lambda-ingest"
+  description        = "Daily market data ingestion into S3"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
@@ -112,7 +113,7 @@ resource "aws_iam_role_policy" "ingest" {
 # --------------------------------------------------------------------------
 
 resource "aws_iam_role" "monitor" {
-  name               = "${var.project}-monitor-role"
+  name               = "${var.project}-lambda-monitor"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 

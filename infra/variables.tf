@@ -125,3 +125,13 @@ variable "monthly_budget_usd" {
   type        = number
   default     = 20
 }
+
+variable "noncurrent_version_days" {
+  description = <<-TEXT
+    Days a superseded object version is kept. Thirty rather than ninety: a bad
+    ingestion run is noticed within a day or two, so a quarter of history buys
+    nothing and is billed for the whole time.
+  TEXT
+  type        = number
+  default     = 30
+}

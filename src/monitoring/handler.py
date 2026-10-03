@@ -21,8 +21,10 @@ from datetime import date
 
 import pandas as pd
 
+from src.logging_setup import configure_logging
+
 log = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+configure_logging()
 
 REFERENCE_KEY = "monitoring/reference/current.json"
 FEATURES_KEY = "features/latest/training.parquet"

@@ -27,14 +27,15 @@ from __future__ import annotations
 import argparse
 import json
 import logging
-import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
+from src.logging_setup import configure_logging
+
 log = logging.getLogger(__name__)
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
+configure_logging()
 
 # Held-out rows used for the explanation. SHAP on a tree ensemble is exact but
 # scales with rows times trees, and 126 days is already enough for a stable

@@ -14,7 +14,6 @@ and that is decided in `serving.py`.
 from __future__ import annotations
 
 import logging
-import os
 import time
 from datetime import date as date_type
 
@@ -28,9 +27,10 @@ from src.api.schemas import (
     PredictRequest,
     PredictResponse,
 )
+from src.logging_setup import configure_logging
 
-logging.basicConfig(level=os.environ.get("LOG_LEVEL", "INFO"))
 log = logging.getLogger(__name__)
+configure_logging()
 
 DESCRIPTION = """
 Forecasts the next trading day's **gold price volatility** from ten years of

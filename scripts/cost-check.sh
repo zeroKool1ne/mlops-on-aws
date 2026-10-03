@@ -4,13 +4,32 @@
 # Usage:
 #   ./scripts/cost-check.sh              # uses AWS_PROFILE or "default"
 #   ./scripts/cost-check.sh privat       # checks a specific profile
-#   ./scripts/cost-check.sh ironhack
+#   ./scripts/cost-check.sh privat --spend   # include the account-wide bill
 #
 # Read-only. Nothing here creates, modifies or deletes anything.
+#
+# The month-to-date spend breakdown is behind --spend on purpose. It reports
+# the whole ACCOUNT, and development runs in a shared course account, where
+# that is every participant's spend and none of this project's business. For
+# what this project costs, use scripts/cost-report.py, which measures the
+# goldmlops-* resources and prices them itself.
+#
+# The resource inventory is filtered to this project by default, behind
+# --all-resources otherwise, for the same reason. It does not show money, but
+# on a shared account it shows other people's clusters and load balancers by
+# name, and those names are not ours to collect or repeat. Use it unfiltered
+# only on an account you own.
 
 set -uo pipefail
 
 PROFILE="${1:-${AWS_PROFILE:-default}}"
+
+SHOW_SPEND=0
+SHOW_ALL=0
+for arg in "$@"; do
+  [[ "$arg" == "--spend" ]] && SHOW_SPEND=1
+  [[ "$arg" == "--all-resources" ]] && SHOW_ALL=1
+done
 
 # Regions worth checking. Most accounts only ever use two or three, but a
 # forgotten instance in an unused region is exactly the kind of thing that
@@ -36,6 +55,12 @@ echo
 MONTH_START=$(date '+%Y-%m-01')
 TOMORROW=$(date -v+1d '+%Y-%m-%d' 2>/dev/null || date -d tomorrow '+%Y-%m-%d')
 
+if [[ $SHOW_SPEND -eq 0 ]]; then
+  echo "${BOLD}--- Spend so far this month ---${OFF}"
+  echo "  Skipped: this reports the whole account, which is shared."
+  echo "  This project's own cost:  python scripts/cost-report.py"
+  echo "  Account-wide anyway:      $0 ${PROFILE} --spend"
+else
 echo "${BOLD}--- Spend so far this month (from ${MONTH_START}) ---${OFF}"
 aws_p ce get-cost-and-usage \
   --time-period "Start=${MONTH_START},End=${TOMORROW}" \
@@ -57,10 +82,29 @@ for r in d.get('ResultsByTime', []):
     print(f'  {\"-\"*9}')
     print(f'  {total:9.2f} USD  TOTAL')
 "
+fi
 echo
 
 # --- What is actually running right now ----------------------------------
-echo "${BOLD}--- Billable resources currently running ---${OFF}"
+if [[ $SHOW_ALL -eq 0 ]]; then
+  echo "${BOLD}--- Billable resources: this project only ---${OFF}"
+  for region in "${REGIONS[@]}"; do
+    MINE=$(aws_p resourcegroupstaggingapi get-resources --region "$region" \
+      --query 'ResourceTagMappingList[].ResourceARN' --output text 2>/dev/null \
+      | tr '\t' '\n' | grep -i goldmlops || true)
+    [[ -n "$MINE" ]] && { echo "${BOLD}[${region}]${OFF}"; printf '  %s\n' $MINE; }
+  done
+  echo
+  echo "  Nothing billable of ours runs while idle - Lambda, S3 and ECR only."
+  echo "  Measured cost:        python scripts/cost-report.py"
+  echo "  Whole account anyway: $0 ${PROFILE} --all-resources"
+  echo
+  echo "Checked regions: ${REGIONS[*]}"
+  exit 0
+fi
+
+echo "${BOLD}--- Billable resources currently running (WHOLE ACCOUNT) ---${OFF}"
+echo "${YELLOW}On a shared account this lists other people's resources. Do not copy it anywhere.${OFF}"
 FOUND=0
 
 for region in "${REGIONS[@]}"; do

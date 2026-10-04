@@ -186,41 +186,152 @@ aws s3 ls "s3://$(terraform -chdir=infra output -raw data_bucket)/monitoring/rep
 
 ## What it costs
 
-Measured against the us-east-1 price list, at this project's actual volume:
-22 ingestion runs and 22 drift checks a month, and a few hundred API calls.
+Two numbers, because they answer two questions:
 
-| Service | What drives the cost | Monthly |
+| | |
+|---|---|
+| **Measured today** | **$0.04 a month** — what the deployed resources have actually used |
+| **Projected** | **≈ $1.40 a month** — the finished architecture, running daily |
+
+Most of the gap is monitoring that does not exist yet. Both numbers are
+reproducible at any time:
+
+```bash
+python scripts/cost-report.py          # measured, from the resources themselves
+python scripts/cost-report.py --json   # same, machine-readable
+```
+
+### The breakdown
+
+List prices for `us-east-1`, checked October 2026 (the date is in
+`scripts/cost-report.py`, because a cost model with undated prices cannot be
+checked later). Volume assumes 22 trading days a month.
+
+| Service | What drives it | Measured | Projected |
+|---|---|---|---|
+| CloudWatch — custom metrics | 3 metrics × $0.30 | $0.00 — none exist | **$0.90** |
+| CloudWatch — alarms | 4 alarms × $0.10 | $0.00 — none exist | **$0.40** |
+| ECR storage | 0.349 GiB of unique layers × $0.10/GB | **$0.0349** | $0.0349 |
+| CloudWatch logs | 14-day retention, low volume | $0.0000003 | ~$0.03 |
+| Lambda — ingestion | 22 runs × 7 s billed × 2 GB, arm64 | $0.0011 | $0.0041 |
+| Lambda — API | a few hundred invocations | not deployed | ~$0.02 |
+| Lambda — drift check | 22 runs × ~20 s × 1 GB | not deployed | ~$0.01 |
+| S3 storage | Parquet, current and noncurrent versions | $0.0001 | $0.0003 |
+| S3 requests | ~130 PUT a month | < $0.01 | < $0.01 |
+| API Gateway (HTTP) | $1.00 per million | not deployed | < $0.01 |
+| EventBridge Scheduler | 14 M invocations free each month | $0.00 | $0.00 |
+| SNS, SQS | inside the perpetual free tier | $0.00 | $0.00 |
+| **Total** | | **$0.036** | **≈ $1.40** |
+
+Two thirds of the projected bill is CloudWatch: **the monitoring costs more
+than the compute and storage of the system it monitors, by a factor of
+thirty.** That is the honest shape of a small serverless workload, and it is
+worth saying rather than rounding away. Dropping the custom metrics and alarms
+would bring the bill under $0.10 — and then nobody would find out when the
+model started drifting. The monitoring is not overhead on the system; at this
+size it *is* the system's running cost.
+
+### How this is measured, and why not with Cost Explorer
+
+Development runs in a shared course account. Cost Explorer there reports the
+whole cohort's spend, which is both none of this project's business and the
+wrong question — it cannot say what *this* costs. So nothing above comes from a
+bill. Each resource's usage is read and priced directly, which is also the only
+method that works before the first invoice exists.
+
+**Lambda is exact, not approximated.** Every invocation writes a `REPORT` line
+carrying its billed duration and configured memory:
+
+```
+REPORT RequestId: 666ac0c7…  Billed Duration: 7003 ms  Memory Size: 2048 MB
+```
+
+That is precisely what AWS charges on, so parsing those lines reconstructs the
+bill rather than estimating it. It also makes the two cost drivers visible
+separately: billed duration includes the init phase for container images (a
+4.3 s import of pandas and scikit-learn, charged on every cold start), which
+would be invisible in a per-request estimate.
+
+**Memory is not the figure to minimise.** The ingestion peaks at 291 MB of the
+2048 MB configured, which looks like sevenfold over-provisioning and is not:
+memory also sets the CPU share, and billing is GB-seconds — memory × time. More
+memory at a shorter runtime often costs the same or less. Right-sizing a Lambda
+means testing that product, not measuring peak memory.
+
+**ECR image sizes must not be added up.** `imageSizeInBytes` counts every layer
+an image references, so summing it across images multiplies whatever they
+share — and images built from the same source share nearly everything. This
+repository holds four images:
+
+| | Tag | `imageSizeInBytes` |
 |---|---|---|
-| CloudWatch — custom metrics | 3 metrics × $0.30 | **$0.90** |
-| CloudWatch — alarms | 4 alarms × $0.10 | **$0.40** |
-| ECR storage | 1.6 GB × $0.10/GB | **$0.16** |
-| Lambda — ingestion | 22 runs × ~90 s × 1.5 GB, arm64 | **$0.04** |
-| Lambda — API | a few hundred invocations | **$0.02** |
-| Lambda — drift check | 22 runs × ~20 s × 1 GB | **$0.01** |
-| S3 storage | < 1 GB, mostly Parquet | **$0.02** |
-| S3 requests | a few thousand PUT/GET | **$0.01** |
-| API Gateway (HTTP) | $1.00 per million | **< $0.01** |
-| SNS, SQS, EventBridge, Budgets | all inside the perpetual free tier | **$0.00** |
-| CloudWatch logs | 14-day retention, low volume | **$0.03** |
-| **Total** | | **≈ $1.60** |
+| OCI image index (rejected by Lambda) | — | 374 MB |
+| its arm64 manifest | — | 374 MB |
+| its attestation manifest | — | 1.4 kB |
+| the Docker V2 manifest in use | `latest` | 374 MB |
 
-Three quarters of that is CloudWatch — monitoring costs more than the entire
-compute and storage of the system it monitors. That is the honest shape of a
-small serverless workload, and it is worth saying out loud rather than
-rounding away: the custom metrics and alarms could be dropped to bring the bill
-under $0.30, and then nobody would find out when the model started drifting.
+Summed: 1.046 GiB, $0.105 a month. Actually stored: **13 unique layers,
+0.349 GiB, $0.035 a month** — a threefold difference. `cost-report.py` walks
+the manifests and collects layer digests into a set rather than adding the
+sizes. The same content-addressing that makes a second `docker push` fast makes
+the naive sum wrong.
 
-**What is deliberately absent from that table:** any resource that is billed
-while idle. No EC2 instance, no NAT gateway ($32/month), no Real-Time SageMaker
-endpoint ($40/month for `ml.m5.large`), no RDS, no MLflow tracking server, no
-ALB ($16/month). Each of those was considered and rejected in `decisions.md`,
-and together they are the difference between $1.60 and roughly $90.
+Three of those four images are debris from a build that had BuildKit
+provenance enabled, and the lifecycle rule (`imageCountMoreThan: 10`) will not
+reach them. A second rule for untagged images would; failed builds produce them
+routinely.
 
-**The one thing to watch.** The API is public and unauthenticated so that it
-can be demonstrated. Throttling is set to 10 requests per second with a burst
-of 20, and the Lambda is capped by its own concurrency, so a runaway script
-costs cents rather than dollars. For anything beyond a demo, put an API key or
-a Cognito authorizer in front of it.
+### What is deliberately absent
+
+Any resource billed while idle. No EC2 instance, no NAT gateway ($32/month),
+no Real-Time SageMaker endpoint ($40/month for `ml.m5.large`), no RDS, no
+MLflow tracking server, no ALB ($16/month). Each was considered and rejected in
+`decisions.md`; together they are the difference between $1.40 and roughly $90.
+
+### The one thing to watch
+
+The API is public and unauthenticated so that it can be demonstrated.
+Throttling is set to 10 requests per second with a burst of 20, and the Lambda
+is capped by its own concurrency, so a runaway script costs cents rather than
+dollars. For anything beyond a demo, put an API key or a Cognito authorizer in
+front of it.
+
+### Keeping an eye on it
+
+```bash
+python scripts/cost-report.py        # what this project costs
+./scripts/cost-check.sh              # what of this project is running
+```
+
+`cost-check.sh` has two flags that are off by default, both because the account
+is shared: `--spend` reports the account-wide bill, and `--all-resources`
+inventories every billable resource in it — which shows other participants'
+clusters and load balancers by name. Use either only on an account you own.
+
+Tags (`Project=goldmlops`) are what make the filtered inventory work. They do
+**not** make costs appear per project in the console: that needs cost
+allocation tags activated, which is a payer-level setting on an account that is
+not ours. Hence the local calculation.
+
+### The budget alarm does not work here, and that is worth knowing
+
+`infra/budget.tf` filters on `TagKeyValue = user:Project$goldmlops`, which is
+the right design: an account-level budget on a shared account says nothing
+about this project. But a budget can only filter on a tag that has been
+**activated as a cost allocation tag**, and that is the payer-level setting
+above. Unactivated, the filter matches nothing, the budget stays at $0.00
+forever and never fires.
+
+So the seatbelt is bolted in but not fastened, and it fails in the worst
+direction: silently, and looking exactly like "nothing has gone wrong yet".
+On an account where the tag can be activated, it works as written; here,
+`cost-report.py` is the substitute, and it has to be run rather than waited
+for.
+
+The limit is also worth a second look independently of that. At $20 against a
+projected $1.40 it catches an accidental NAT gateway or a Real-Time endpoint,
+which is the point — but not a tenfold overrun. Two thresholds, say $5 and
+$20, would separate "this is wrong" from "this is catastrophic".
 
 ---
 

@@ -282,20 +282,37 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 
 ## Cost
 
-**About $1.60 a month**, idle. Full breakdown in
-[`docs/aws-setup.md`](docs/aws-setup.md#what-it-costs).
+**$0.04 a month measured, ≈$1.40 projected** for the finished architecture.
+Both are reproducible:
 
-Three quarters of that is CloudWatch — the monitoring costs more than the
-compute and storage of the system it monitors. That is the honest shape of a
-small serverless workload. The custom metrics and alarms could be dropped to
-get under $0.30, and then nobody would find out when the model started
-drifting.
+```bash
+python scripts/cost-report.py
+```
+
+The measured figure is what the deployed resources have actually used; the
+projected one includes the monitoring that is not built yet. Full breakdown and
+method in [`docs/aws-setup.md`](docs/aws-setup.md#what-it-costs).
+
+Nothing here reads a bill. Each resource's usage is measured and priced against
+the published rates — Lambda exactly, from the `Billed Duration` and
+`Memory Size` in every `REPORT` line, which is what AWS charges on. That also
+keeps the calculation honest about where the money goes: **two thirds of the
+projected bill is CloudWatch.** The monitoring costs thirty times the compute
+and storage of the system it monitors, which is the shape of a small serverless
+workload rather than a mistake. Dropping the metrics and alarms would get under
+$0.10, and then nobody would find out when the model started drifting.
+
+One number worth keeping: ECR image sizes cannot be added up. Four images in
+the registry report 1.046 GiB between them and occupy 0.349 GiB, because images
+built from the same source share nearly all their layers and each layer is
+stored once. The same content-addressing that makes a second `docker push` fast
+makes the naive sum wrong by threefold.
 
 What is deliberately absent: no EC2 instance, no NAT gateway ($32/month), no
 Real-Time SageMaker endpoint ($40/month), no RDS, no load balancer, no MLflow
 tracking server. Each was considered and rejected in
 [`docs/decisions.md`](docs/decisions.md); together they are the difference
-between $1.60 and roughly $90.
+between $1.40 and roughly $90.
 
 ## Credits
 

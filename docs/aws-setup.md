@@ -190,11 +190,14 @@ Two numbers, because they answer two questions:
 
 | | |
 |---|---|
-| **Measured today** | **$0.04 a month** — what the deployed resources have actually used |
+| **Measured today** | **$0.47 a month** — what the deployed resources have actually used |
 | **Projected** | **≈ $1.40 a month** — the finished architecture, running daily |
 
-Most of the gap is monitoring that does not exist yet. Both numbers are
-reproducible at any time:
+The projection predicted this: four alarms at $0.10 were the single largest
+line in it, and the moment they were created they became the single largest
+line in the measurement. The remaining gap is three custom metrics and the
+drift Lambda, which do not exist yet. Both numbers are reproducible at any
+time:
 
 ```bash
 python scripts/cost-report.py          # measured, from the resources themselves
@@ -210,8 +213,8 @@ checked later). Volume assumes 22 trading days a month.
 | Service | What drives it | Measured | Projected |
 |---|---|---|---|
 | CloudWatch — custom metrics | 3 metrics × $0.30 | $0.00 — none exist | **$0.90** |
-| CloudWatch — alarms | 4 alarms × $0.10 | $0.00 — none exist | **$0.40** |
-| ECR storage | 0.349 GiB of unique layers × $0.10/GB | **$0.0349** | $0.0349 |
+| CloudWatch — alarms | 4 alarms × $0.10 | **$0.40** | $0.40 |
+| ECR storage | 0.662 GiB of unique layers × $0.10/GB | **$0.0662** | $0.0662 |
 | CloudWatch logs | 14-day retention, low volume | $0.0000003 | ~$0.03 |
 | Lambda — ingestion | 22 runs × 7 s billed × 2 GB, arm64 | $0.0011 | $0.0041 |
 | Lambda — API | a few hundred invocations | not deployed | ~$0.02 |
@@ -221,7 +224,7 @@ checked later). Volume assumes 22 trading days a month.
 | API Gateway (HTTP) | $1.00 per million | not deployed | < $0.01 |
 | EventBridge Scheduler | 14 M invocations free each month | $0.00 | $0.00 |
 | SNS, SQS | inside the perpetual free tier | $0.00 | $0.00 |
-| **Total** | | **$0.036** | **≈ $1.40** |
+| **Total** | | **$0.47** | **≈ $1.40** |
 
 Two thirds of the projected bill is CloudWatch: **the monitoring costs more
 than the compute and storage of the system it monitors, by a factor of

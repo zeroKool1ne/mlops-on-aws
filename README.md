@@ -305,7 +305,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 
 ## Cost
 
-**$0.04 a month measured, ≈$1.40 projected** for the finished architecture.
+**$0.47 a month measured, ≈$1.40 projected** for the finished architecture.
 Both are reproducible:
 
 ```bash
@@ -313,7 +313,10 @@ python scripts/cost-report.py
 ```
 
 The measured figure is what the deployed resources have actually used; the
-projected one includes the monitoring that is not built yet. Full breakdown and
+projected one includes the monitoring that is not built yet. The projection
+named four alarms at $0.10 as its largest line, and the day they were created
+they became the largest line in the measurement too — which is the most useful
+thing a cost model can do. Full breakdown and
 method in [`docs/aws-setup.md`](docs/aws-setup.md#what-it-costs).
 
 Nothing here reads a bill. Each resource's usage is measured and priced against

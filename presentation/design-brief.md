@@ -1,186 +1,179 @@
-# Design-Brief — zum Weitergeben an Claude Design
+# Design brief — to hand to Claude Design
 
-> **Anleitung für Daniel:** Alles ab der Trennlinie markieren, kopieren, in Claude
-> Design einfügen. Der Sprechtext steht in [`script.md`](script.md) und wird
-> **nicht** mitgeschickt — die Folien sollen fast ohne Text auskommen.
+> **For Daniel:** select everything below the line, copy it, paste it into Claude
+> Design. The spoken text lives in [`script.md`](script.md) and is **not** sent —
+> the slides should work with almost no text.
 
 ---
 
-Bitte baue mir ein Foliendeck mit **12 Folien** für einen 10-minütigen Vortrag
-vor einer Entscheiderin oder einem Entscheider ohne technischen Hintergrund.
+Please build me a **12-slide deck** for a ten-minute talk to a decision-maker
+with no technical background. **All slide text in English.**
 
-## Zuerst: was dieses Deck NICHT sein darf
+## First: what this deck must NOT be
 
-Das Publikum ist fachfremd, **nicht begriffsstutzig** — und hält vermutlich das
-Budget. Der Unterschied ist der ganze Stil:
+The audience is unfamiliar with the field, **not slow** — and probably holds the
+budget. That difference decides the whole style:
 
-| Nicht | Sondern |
+| Not this | This instead |
 |---|---|
-| Kinderbuch, Cartoon, Comic-Gesichter | **Redaktionelle Illustration**, wie in einer guten Wochenzeitung |
-| Kulleraugen, Sprechblasen, Ausrufezeichen | Zurückhaltende, erwachsene Figuren |
-| Knallige Primärfarben | Gedeckte, abgestimmte Palette |
-| „Ganz einfach erklärt" | Einfach erklärt, ohne es dazuzusagen |
+| Children's book, cartoon, comic faces | **Editorial illustration**, as in a good weekly paper |
+| Googly eyes, speech bubbles, exclamation marks | Restrained, adult figures |
+| Bright primary colours | Muted, coordinated palette |
+| "Explained really simply" | Explained simply, without saying so |
 
-**Die Messlatte bleibt:** Jemand soll das Bild ansehen und verstehen, was
-passiert, ohne ein Wort zu lesen. Aber das Bild darf dabei nicht aussehen, als
-wäre es für Kinder gemacht. Die Metapher ist da, weil **das Thema** fremd ist —
-nicht, weil der Zuschauer langsam wäre.
+**The bar stays:** someone should look at the image and understand what is
+happening without reading a word. But the image must not look as if it were made
+for children. The metaphor is there because **the subject** is unfamiliar, not
+because the viewer is slow.
 
-Als Referenz: die Illustrationen zu einer langen Reportage im *Economist*, der
-*ZEIT* oder im *New Yorker*. Handgezeichnet und warm, aber ruhig, präzise und
-erwachsen.
+Reference point: the illustrations accompanying a long feature in *The Economist*
+or *The New Yorker*. Hand-drawn and warm, but calm, precise and grown-up.
 
-## Der Stil
+## The style
 
-- **Illustration statt Infografik.** Keine Kästen mit Pfeilen, keine
-  Flussdiagramme, keine Icon-Raster. Gezeichnete Szenen.
-- **Technik:** Tuschelinie mit flächigem Aquarell oder Gouache. Sichtbarer
-  Strich, leichte Unregelmäßigkeit — handgemacht, nicht vektorglatt.
-- **Palette:** gedecktes Gold/Ocker, Graublau, Salbeigrün, warmes Papierweiß.
-  Ein einziger kräftiger Akzent (gedämpftes Rot), sparsam eingesetzt.
-- **Figuren:** stilisiert, von hinten oder halb abgewandt, Gesichter angedeutet
-  statt ausgezeichnet. Keine Comic-Mimik.
-- **Keine Logos, keine Produkt- oder Markennamen** — weder im Bild noch im Text.
+- **Illustration, not infographic.** No boxes with arrows, no flowcharts, no icon
+  grids. Drawn scenes.
+- **Technique:** ink line with flat watercolour or gouache. Visible stroke, slight
+  irregularity — handmade, not vector-smooth.
+- **Palette:** muted gold/ochre, slate blue, sage green, warm paper white. One
+  stronger accent (muted red), used sparingly.
+- **Figures:** stylised, seen from behind or half-turned, faces suggested rather
+  than drawn. No cartoon expressions.
+- **No logos, no product or brand names** — not in the images, not in the text.
 
-## Der Aufbau jeder Bildfolie
+## How every illustrated slide is built
 
-Zehn der zwölf Folien sind Bildfolien. Alle gleich aufgebaut:
+Ten of the twelve slides are illustrated. All the same structure:
 
 ```
 ┌───────────────────────────────────────┐
 │                                       │
-│          ILLUSTRATION                 │   ca. 70 % der Fläche
-│                                       │
+│          ILLUSTRATION                 │   about 70 % of the area
 │                                       │
 ├───────────────────────────────────────┤
-│  47 ¢ / Monat        ·   0,5 Sekunden │   Faktenstreifen
+│  $0.47 / month       ·   0.5 seconds  │   fact strip
 └───────────────────────────────────────┘
 ```
 
-Der **Faktenstreifen** ist eine schmale Zeile am unteren Rand: ein bis zwei harte
-Angaben, nüchterne Groteskschrift, kein Schmuck, klar abgesetzt vom Bild. Er
-sorgt dafür, dass **keine Folie ohne eine überprüfbare Zahl** ist.
+The **fact strip** is a narrow line along the bottom: one or two hard figures,
+plain sans-serif, no decoration, clearly separated from the image. It ensures
+**no slide is without a checkable number**.
 
-Über dem Bild steht eine Überschrift von **höchstens sechs Wörtern**.
+Above the image, a headline of **at most six words**.
 
-## Die durchgehende Welt
+## The continuous world
 
-Alle Bildfolien spielen in **einem kleinen Wetterdienst** — dieselbe Landschaft,
-dieselben Figuren, wiedererkennbar von Folie zu Folie.
+Every illustrated slide is set in **one small weather service** — same landscape,
+same figures, recognisable from slide to slide.
 
-**Die wiederkehrenden Figuren:**
-- **Der Meteorologe** — ruhige ältere Person, Strickjacke, Lesebrille. Kompetent
-  und unaufgeregt. Kein Professor-Klischee, kein Chaos auf dem Schreibtisch.
-- **Die Botin** — zügige Figur mit Umhängetasche und Fahrrad, meist in Bewegung
-  oder im Anschnitt.
-- **Die ältere Beobachterin** — sitzt auf einem Zaun und schaut zum Himmel.
-  Steht für die Faustregel. **Würdevoll, nicht als Witzfigur.**
-- **Die Entscheiderin** — die Person, die am Ende die App benutzt.
+**The recurring cast:**
+- **The forecaster** — calm older person, cardigan, reading glasses. Competent and
+  unhurried. No mad-professor cliché, no chaotic desk.
+- **The courier** — brisk figure with a satchel and a bicycle, usually in motion or
+  cropped at the edge.
+- **The older observer** — sits on a fence looking at the sky. Stands for the rule
+  of thumb. **Dignified, never a joke.**
+- **The decision-maker** — the person who uses the app at the end.
 
-Statt Regen und Sonne geht es um Gold: wo bei einem echten Wetterdienst eine
-Wolke hinge, hängt hier eine Goldmünze.
+Instead of rain and sun, this is about gold: where a real weather service would
+have a cloud, this has a gold coin.
 
 ---
 
-## Die zwölf Folien
+## The twelve slides
 
-### 1 — Titel · *Der Wetterdienst für Gold*
-Eine kleine Wetterstation auf einer Hügelkuppe, früher Abend. Am Himmel statt
-der Sonne eine Goldmünze, tief stehend.
-**Faktenstreifen:** *Gold/USD · 10 Jahre Daten · 29 Messgrößen*
+### 1 — Title · *The Weather Service for Gold*
+A small weather station on a hilltop, early evening. In the sky, instead of the
+sun, a low gold coin.
+**Fact strip:** *Gold/USD · 10 years of data · 29 measurements*
 
-### 2 — *Wohin? Nein. Wie stark? Ja.*
-Geteiltes Bild, ruhig gesetzt. Links zwei Pfeile, hoch und runter, beide fein
-durchgestrichen. Rechts zwei Wellenlinien übereinander — eine ruhig, eine
-unruhig — beide mit einem schlichten Haken. Keine Figuren, reine Zeichensprache.
-**Faktenstreifen:** *Richtung: 50 % Trefferquote. Ausmaß: 2,9 % besser als die Faustregel.*
+### 2 — *Which way? No. How much? Yes.*
+Split image, calmly composed. Left: two arrows, up and down, both finely struck
+through. Right: two wave lines, one calm, one agitated, each with a plain check.
+No figures — pure sign language.
+**Fact strip:** *Direction: 50 % hit rate. Magnitude: 2.9 % better than the rule of thumb.*
 
-### 3 — **FAKTENFOLIE: Die Ergebnisse**
-Kein Bild. Ruhige Typografie, viel Weißraum, eine Tabelle:
+### 3 — **FACT SLIDE: The results**
+No image. Calm typography, generous white space, one table:
 
-| | Modell | Faustregel | Differenz |
+| | Model | Rule of thumb | Difference |
 |---|---|---|---|
-| Treffgenauigkeit (RMSE) | 0,00958 | 0,00987 | **+2,9 %** |
-| Geprüft an | 126 Handelstagen, die das Modell nie gesehen hat | | |
-| Richtungsvorhersage | 49–51 % | 50 % | **kein Vorteil** |
+| Accuracy (RMSE) | 0.00958 | 0.00987 | **+2.9 %** |
+| Direction | 49–51 % | 50 % | **no advantage** |
 
-Darunter eine Zeile in kleiner Schrift: *Vier Verfahren getestet. Drei davon
-waren schlechter als nichts zu tun. Das steht hier, weil es dazugehört.*
-**Diese Folie darf dicht und nüchtern sein — der Kontrast zu den Bildern ist beabsichtigt.**
+Below, in small type: *Tested on 126 trading days the model had never seen. Four
+methods tried; three were worse than doing nothing. That is here because it
+belongs here.*
+**This slide may be dense and plain — the contrast with the illustrations is the point.**
 
-### 4 — *Fünf Messstationen, jeden Abend*
-Fünf schlichte Messhäuschen auf einer Hügelkette in der Abenddämmerung, jedes
-mit einem anderen Instrument. Eines davon misst Nervosität — als zartes,
-zitterndes Barometer, **nicht** als Witzfigur.
-**Faktenstreifen:** *Gold · Dollar · Öl · Aktien · Volatilitätsindex*
+### 4 — *Five stations, every evening*
+Five plain measuring huts along a ridge at dusk, each with a different
+instrument. One of them measures nervousness — as a delicate, trembling
+barometer, **not** a joke.
+**Fact strip:** *Gold · Dollar · Oil · Equities · Volatility index*
 
-### 5 — *Ein Wecker, und niemand muss daran denken*
-Innenraum, Nacht. Ein Wecker auf halb zwölf. Die Botin greift nach ihrer Tasche.
-Durchs Fenster die dunklen Messhäuschen.
-**Faktenstreifen:** *23:30 UTC · Montag bis Freitag · seit dem 3. Oktober ohne Ausfall*
+### 5 — *An alarm clock, and nobody has to remember*
+Interior, night. An alarm clock at half past eleven. The courier reaches for her
+satchel. Through the window, the dark measuring huts.
+**Fact strip:** *23:30 UTC · Monday to Friday · after the New York close*
 
-### 6 — *Bezahlt für die Fahrt, nicht fürs Dasein*
-Zwei Szenen nebeneinander. Links ein beleuchtetes, leeres Bürogebäude bei Nacht.
-Rechts die Botin auf dem Fahrrad, eine einzelne Münze in der Luft hinter ihr.
-Der Kontrast trägt das Bild — keine Erklärtexte, keine Pfeile.
-**Faktenstreifen:** *Eigener Server: ~90 $/Monat. So: 0,47 $/Monat.*
+### 6 — *Paid for the ride, not for existing*
+Two scenes side by side. Left: a lit, empty office building at night. Right: the
+courier on her bicycle, a single coin in the air behind her. The contrast carries
+the image — no explanatory labels, no arrows.
+**Fact strip:** *Own server: about $90/month. This way: $0.47/month.*
 
-### 7 — *Nichts wird überschrieben*
-Ein Archivraum mit datierten Schubladen, warmes Licht. Die Botin legt ein neues
-Blatt ab. In der Ecke ein leerer, verstaubter Papierkorb — beiläufig, nicht
-betont.
-**Faktenstreifen:** *Jeder Tag einzeln abgelegt · jede Vorhersage nachstellbar*
+### 7 — *Nothing is ever overwritten*
+An archive room with dated drawers, warm light. The courier files a new sheet. In
+the corner, incidentally, an empty and dusty wastebasket.
+**Fact strip:** *Every day filed separately · every forecast reproducible*
 
-### 8 — *Ein Rechenblatt, nicht zwei*
-Links der Meteorologe beim Lernen, rechts derselbe im Dienst — dazwischen ein
-einziges großes Rechenblatt, das beide benutzen. Darunter, klein und blass, die
-falsche Variante: zwei Blätter, die auseinanderdriften.
-**Faktenstreifen:** *Dieselbe Berechnung in Training und Betrieb · durch Tests abgesichert*
+### 8 — *One worksheet, not two*
+Left, the forecaster learning; right, the same person on the job — and between
+them one single large worksheet both are using. Below, small and faint, the wrong
+version: two sheets drifting apart.
+**Fact strip:** *Same calculation in training and in service · covered by tests*
 
-### 9 — *Erst besser als die Faustregel, dann im Dienst*
-Die ältere Beobachterin auf dem Zaun, zum Himmel schauend. Daneben, respektvoll
-auf Augenhöhe, der Meteorologe mit einem Prüfbogen. Kein Wettkampf, kein
-Sieger-Gesicht.
-**Faktenstreifen:** *Freigabe erst ab 2 % Verbesserung · gemessen, nicht geschätzt*
+### 9 — *Beat the rule of thumb first*
+The older observer on the fence, looking at the sky. Beside her, as an equal, the
+forecaster with an examination sheet. No contest, no winner's face.
+**Fact strip:** *Released only above 2 % improvement · achieved: 2.9 % · measured, not estimated*
 
-### 10 — *Der gefährlichste Ausfall sieht aus wie Normalbetrieb*
-Das Stationshaus wirkt friedlich. Die Messhäuschen auf dem Hügel sind dunkel und
-überwachsen. Im Haus leuchtet ein kleines Warnlicht. Die Spannung liegt im
-Kontrast, nicht in Dramatik.
-**Faktenstreifen:** *5 Alarme · einer meldet, wenn vier Tage lang nichts passiert*
+### 10 — *The worst failure looks like normal operation*
+The station house looks peaceful. The measuring huts on the ridge are dark and
+overgrown. Inside, a small warning light. Tension through contrast, not drama.
+**Fact strip:** *5 alarms · one fires when nothing has happened for four days*
 
-### 11 — **FAKTENFOLIE: Kosten und Betrieb**
-Kein Bild. Links eine Kostenaufstellung, rechts eine kurze Betriebsübersicht.
+### 11 — **FACT SLIDE: Cost and operations**
+No image. Left a cost table, right a short operations summary.
 
-| Posten | pro Monat |
+| Item | per month |
 |---|---|
-| Überwachung | 0,40 $ |
-| Ablage des Programms | 0,07 $ |
-| Rechenzeit | 0,004 $ |
-| Datenspeicher | 0,0001 $ |
-| **Summe** | **0,47 $** |
+| Monitoring | $0.40 |
+| Storing the program | $0.07 |
+| Compute | $0.004 |
+| Data storage | $0.0001 |
+| **Total** | **$0.47** |
 
-Daneben: *Antwortzeit 0,5 s · 5 Alarme · kein Server, der im Leerlauf kostet ·
-Vergleichbare Bauweise mit eigenem Server: ~90 $/Monat*
+Beside it: *Response time 0.5 s · 5 alarms · no server billed while idle ·
+Same solution on an own server: about $90/month*
 
-Eine Zeile darunter, klein: *Der größte Posten ist die Überwachung. Sie kostet
-mehr als alles, was sie überwacht — das ist bei Systemen dieser Größe normal
-und beabsichtigt.*
+One line below, small: *The largest item is the monitoring. It costs more than
+everything it monitors — normal and intended at this size.*
 
-### 12 — *Ein Knopf*
-Die Entscheiderin mit dem Telefon in der Hand, auf dem Display groß **± 33 $**
-und eine ruhige Wellenlinie. Durch das Fenster hinter ihr, klein, die
-Wetterstation auf dem Hügel.
-**Faktenstreifen:** *0,5 Sekunden von der Frage zur Antwort*
+### 12 — *One button*
+The decision-maker with a phone in hand, the display showing a large **± $33** and
+a calm wave. Through the window behind her, small, the weather station on the
+hill.
+**Fact strip:** *0.5 seconds from question to answer*
 
 ---
 
 ## Format
 
 - **16:9**
-- Bildfolien: Illustration ~70 %, Überschrift oben (max. 6 Wörter),
-  Faktenstreifen unten
-- Faktenfolien: keine Illustration, großzügiger Weißraum, eine klare Tabelle,
-  gleiche Schrift wie die Faktenstreifen — die beiden Welten sollen sichtbar
-  zusammengehören
-- Alle Schrift aus zehn Metern lesbar
+- Illustrated slides: image ~70 %, headline on top (max 6 words), fact strip at
+  the bottom
+- Fact slides: no illustration, generous white space, one clear table, same
+  typeface as the fact strips — the two registers should visibly belong together
+- All type legible from ten metres

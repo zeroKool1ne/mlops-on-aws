@@ -1,286 +1,268 @@
-# Der Wetterdienst für Gold
-### 10 Minuten für jemanden, der es absegnen muss und nichts von Technik versteht
+# The Weather Service for Gold
+### Ten minutes for someone who has to approve this and does not work in tech
 
-> **Die eine Regel für diesen Vortrag:** Kein einziges Fachwort ohne Bild davor.
-> Nicht „Lambda", sondern „ein Bote, der nur kommt, wenn der Wecker klingelt —
-> und sofort wieder geht". Wenn du merkst, dass du ein Wort benutzt, das es im
-> Wetterdienst nicht gibt, streich es.
+> **The one rule:** no technical term without a picture in front of it. Not
+> "Lambda" — "a courier who comes when the alarm rings and leaves again". If you
+> catch yourself using a word that does not exist in a weather service, cut it.
 
 ---
 
-## Tonfall — der schmale Grat
+## Tone — the narrow line
 
-Dein Publikum ist **fachfremd, nicht begriffsstutzig**, und hält vermutlich das
-Budget. Zwischen „anschaulich erklärt" und „der hält mich für dumm" liegt kein
-großer Abstand, und er entscheidet sich fast nur im Tonfall.
+Your audience is **unfamiliar with the field, not slow**, and probably holds the
+budget. The distance between "explained well" and "he thinks I'm stupid" is
+short, and it is decided almost entirely by tone.
 
-**Die Haltung:** Die Metapher ist da, weil *das Thema* fremd ist — nicht, weil
-der Zuhörer langsam wäre. Also benutze sie selbstverständlich und entschuldige
-dich nie dafür.
+**The stance:** the metaphor is here because *the subject* is unfamiliar, not
+because the listener is. So use it naturally and never apologise for it.
 
-**Diese Sätze nicht sagen:**
+**Do not say:**
 
-| Nicht | Weil |
+| Not this | Because |
 |---|---|
-| „Ganz einfach gesagt …" | kündigt an, dass du herunterschaltest |
-| „Das ist jetzt stark vereinfacht" | klingt nach *für Sie reicht die Kinderversion* |
-| „Ist das soweit klar?" | prüft den Zuhörer ab wie im Unterricht |
-| „Sie müssen das nicht verstehen" | genau das Gegenteil von dem, was du willst |
-| „Im Prinzip ist das wie …" | das abschwächende *im Prinzip* schwächt dich mit |
+| "Put very simply…" | announces that you are dialling down |
+| "This is heavily simplified" | sounds like *the children's version will do for you* |
+| "Does that make sense so far?" | tests them like a classroom |
+| "You don't need to understand this" | the opposite of what you want |
+| "It's basically like…" | *basically* weakens you along with it |
 
-**Stattdessen** einfach das Bild benutzen, ohne es anzukündigen. „Jeden Abend
-werden fünf Messgeräte abgelesen" braucht kein *stellen Sie sich vereinfacht
-vor*.
+**Instead** just use the picture without announcing it. "Every evening five
+instruments are read" needs no *imagine, in simple terms*.
 
-**Der eine Satz, der den ganzen Grat entschärft** — gleich in der ersten Minute,
-nach dem Einstieg:
+**The one sentence that defuses the whole problem** — in the first minute, right
+after the opening:
 
-> „Ich erkläre das entlang eines Bildes, weil es die kürzeste Erklärung ist.
-> Wenn Sie an irgendeiner Stelle die technischen Details wollen — sagen Sie es,
-> ich habe sie dabei."
+> "I'll explain this along a picture, because it's the shortest route. If at any
+> point you want the technical detail, say so — I have it with me."
 
-Damit gibst du die Kontrolle ab. Wer selbst entscheiden darf, wie tief es geht,
-fühlt sich nicht herabgesetzt. Und du zeigst nebenbei, dass unter dem Bild etwas
-liegt.
+That hands over control. Someone who gets to choose the altitude does not feel
+talked down to. And you show in passing that there is something underneath.
 
 ---
 
-## Der rote Faden
+## The thread
 
-Wir haben **einen Wetterdienst gebaut. Nur nicht für Regen, sondern für den Goldpreis.**
+We built **a weather service. Just not for rain — for the price of gold.**
 
-Alles im Vortrag spielt in dieser einen Welt. Keine zweite Metapher, kein Wechsel.
-
----
-
-## 0:00 – 1:00 · Was ist das überhaupt
-
-> „Stellen Sie sich einen kleinen Wetterdienst vor.
->
-> Jeden Abend lesen Messstationen ihre Geräte ab. Die Werte wandern in ein
-> Archiv. Ein Meteorologe hat gelernt, aus diesen Werten das Wetter von morgen
-> abzuschätzen. Und wer wissen will, wie morgen wird, schaut in die App.
->
-> Genau das haben wir gebaut — nur ist unser Wetter der **Goldpreis**."
-
-**Auf der Folie:** eine kleine Wetterstation auf einem Hügel, daneben ein Goldbarren statt einer Sonne.
+All twelve slides live in that one world. No second metaphor, no switching.
 
 ---
 
-## 1:00 – 2:30 · Was es kann — und was es ehrlicherweise nicht kann
+## 0:00 – 1:00 · What this is
 
-Das ist der wichtigste Teil. Er macht dich glaubwürdig, bevor du irgendetwas versprichst.
+> "Picture a small weather service.
+>
+> Every evening, measuring stations are read. The values go into an archive. A
+> forecaster has learned to judge tomorrow's weather from those values. And
+> anyone who wants to know looks at the app.
+>
+> That is exactly what we built — except our weather is **the price of gold**."
 
-> „Jetzt muss ich Ihnen zuerst etwas sagen, was ungewöhnlich ist für so eine
-> Präsentation.
->
-> **Ob der Goldpreis morgen steigt oder fällt, können wir nicht vorhersagen.**
-> Niemand kann das. Wir haben es mit vier verschiedenen Verfahren versucht, und
-> jedes einzelne war schlechter als raten.
->
-> Aber — und das ist das Interessante:
->
-> **Wie stark er sich bewegt, können wir vorhersagen.**
->
-> Beim Wetter ist das genauso. Ob morgen genau um 14 Uhr ein Tropfen fällt,
-> weiß kein Mensch. Ob morgen ein ruhiger Tag wird oder ein stürmischer — das
-> sieht ein Meteorologe sehr wohl.
->
-> Unser System sagt Ihnen also nicht *wohin*. Es sagt Ihnen: **morgen wird es
-> ruhig** oder **morgen wird es wild**. Für jeden, der mit Risiko zu tun hat,
-> ist das die wichtigere Hälfte."
-
-**Die Zahl dazu:** *„Heute sagt es: plus/minus 33 Dollar. Ein ruhiger Tag."*
-
-**Auf der Folie:** links ein Pfeil nach oben und einer nach unten, beide durchgestrichen. Rechts eine ruhige Welle und eine wilde Welle, beide mit Haken.
+**Then the control sentence from the Tone section.**
 
 ---
 
-## 2:30 – 3:30 · Die Zahlen dazu *(Faktenfolie)*
+## 1:00 – 2:30 · What it can do, and what it honestly cannot
 
-Direkt nach dem Bild die nüchterne Folie. Der Wechsel ist Absicht: erst das
-Bild, dann der Beleg.
+The most important part. It makes you credible before you promise anything.
 
-> „Hier sind die Zahlen dahinter.
+> "First I have to tell you something unusual for a presentation like this.
 >
-> Wir messen gegen eine Faustregel — *morgen wird es wie heute*. Die ist bei
-> Finanzdaten erstaunlich schwer zu schlagen.
+> **Whether the gold price goes up or down tomorrow, we cannot predict.** Nobody
+> can. We tried four different methods, and every one of them was worse than
+> guessing.
 >
-> Unser Modell schlägt sie um **2,9 Prozent**. Geprüft an **126 Handelstagen,
-> die es vorher nie gesehen hat** — das ist der Punkt, nicht die 2,9.
+> But — and this is the interesting part:
 >
-> Bei der Richtung liegen wir bei fünfzig Prozent. Das ist Münzwurf, und das
-> steht so auf der Folie, weil es dazugehört."
+> **How much it moves, we can predict.**
+>
+> It's the same with weather. Whether a drop falls at two o'clock tomorrow, no
+> one knows. Whether tomorrow is calm or stormy — a forecaster can tell you that
+> perfectly well.
+>
+> So the system does not tell you *which way*. It tells you: **tomorrow will be
+> quiet**, or **tomorrow will be wild**. For anyone dealing with risk, that is
+> the more useful half."
 
-**Wenn jemand nachhakt, warum nur 2,9 %:** *„Weil das die ehrliche Zahl ist. Ich
-könnte Ihnen eine schönere zeigen, wenn ich das Modell auf denselben Daten
-prüfe, auf denen es gelernt hat. Die wäre dann nur nichts wert."*
+**The number:** *"Today it says: plus or minus 33 dollars. A quiet day."*
 
 ---
 
-## 3:30 – 6:30 · Wie es gebaut ist — sechs Stationen
+## 2:30 – 3:30 · The numbers behind it *(fact slide)*
 
-Pro Station: **ein Satz Bild, ein Satz Technik, ein Satz Warum.** Nicht mehr.
+Straight after the picture, the plain slide. The switch is deliberate: picture
+first, then the evidence.
 
-### 1. Die Messstationen
-> „Jeden Abend um halb zwölf werden fünf Messgeräte abgelesen: der Goldpreis,
-> der Dollar, das Öl, die Aktienmärkte und ein Index, der misst, wie nervös die
-> Märkte gerade sind — eine Art **Barometer für Angst**.
+> "Here are the numbers.
 >
-> Das passiert von allein. Niemand muss morgens einen Knopf drücken."
-
-### 2. Der Wecker
-> „Ein Wecker im Stationshaus klingelt werktags um halb zwölf abends. Nach
-> Börsenschluss in New York, damit der Tag vollständig ist. Am Wochenende
-> klingelt er nicht — da gibt es nichts zu messen."
-
-### 3. Der Bote, der nur kommt wenn er gebraucht wird
-> „Wenn der Wecker klingelt, kommt ein Bote, holt die Werte ab, trägt sie ins
-> Archiv und geht wieder.
+> We measure against a rule of thumb — *tomorrow will be like today*. With
+> financial data that is surprisingly hard to beat.
 >
-> **Das ist der Trick, der das Ganze so billig macht.** Wir mieten kein Büro,
-> in dem jemand den ganzen Tag sitzt und wartet. Wir bezahlen den Boten für die
-> dreißig Sekunden, die er unterwegs ist. Den Rest des Tages kostet er nichts."
-
-**Das ist die wichtigste Kostenaussage des Vortrags. Langsam sprechen.**
-
-### 4. Das Archiv
-> „Alles wandert in ein Archiv im Keller. **Nichts wird je überschrieben.** Der
-> Zettel von vorgestern liegt noch genau da, wo er hingehört.
+> Our model beats it by **2.9 percent**. Tested on **126 trading days it had
+> never seen** — that is the point, not the 2.9.
 >
-> Warum das wichtig ist: Wenn in einem halben Jahr jemand fragt *‚wie seid ihr
-> denn damals auf diese Vorhersage gekommen?'* — dann können wir den Tag genau
-> nachstellen. Mit den Daten von damals, nicht mit den heutigen."
+> On direction we are at fifty percent. That is a coin flip, and it is on the
+> slide because it belongs there."
 
-### 5. Der Meteorologe
-> „Der Meteorologe hat zehn Jahre Wetter angeschaut und daraus Muster gelernt.
-> Er sitzt nicht den ganzen Tag am Schreibtisch — er wird geweckt, wenn jemand
-> fragt, beantwortet die Frage in einer halben Sekunde und schläft weiter.
->
-> Auch er kostet nur, wenn er arbeitet."
-
-### 6. Der Empfangsschalter
-> „Vor dem Meteorologen sitzt jemand am Empfang. Der nimmt Anfragen an, prüft,
-> ob sie Sinn ergeben, und lässt **höchstens zwei pro Sekunde** durch — damit
-> niemand den Meteorologen überrennen kann.
->
-> Dahinter liegt die App, die Sie gleich sehen."
-
-**Auf der Folie:** alle sechs Stationen als ein Weg von links nach rechts, wie ein Brettspiel.
+**If someone pushes on why only 2.9 %:** *"Because that is the honest number. I
+could show you a prettier one by testing the model on the same data it learned
+from. It would just be worthless."*
 
 ---
 
-## 6:30 – 7:30 · Warum wir es so gebaut haben
+## 3:30 – 6:30 · How it is built — six stations
 
-> „Drei Entscheidungen, und alle drei sparen Geld oder Ärger."
+Per station: **one sentence of picture, one of substance, one of why.** No more.
 
-### „Niemand sitzt herum und wartet"
-> „Hätten wir einen festen Server gemietet, würde der Tag und Nacht laufen und
-> jeden Monat Geld kosten — auch sonntags um drei Uhr nachts, wenn niemand
-> fragt. Stattdessen zahlen wir pro Anfrage.
+### 1. The measuring stations
+> "Every evening at half past eleven, five instruments are read: the gold price,
+> the dollar, oil, the equity markets, and an index that measures how nervous
+> markets are — a **barometer for fear**.
 >
-> **Unterschied: etwa 90 Dollar im Monat gegen 47 Cent.**"
+> This happens on its own. Nobody presses a button in the morning."
 
-### „Ein Rechenblatt, nicht zwei"
-> „Der Meteorologe hat in der Ausbildung mit einem bestimmten Rechenblatt
-> gearbeitet. Im Dienst benutzt er **genau dasselbe** — nicht eine Abschrift.
->
-> Klingt pedantisch. Ist aber die häufigste Art, wie solche Systeme kaputtgehen:
-> Zwei Rechenblätter sind am ersten Tag gleich und driften dann langsam
-> auseinander. Die Vorhersagen werden still falsch. **Niemand merkt es**, weil
-> nirgendwo eine Fehlermeldung erscheint."
+### 2. The alarm clock
+> "An alarm clock in the station house rings on weekdays at half past eleven at
+> night — after the New York close, so the day is complete. At weekends it does
+> not ring. There is nothing to measure."
 
-### „Die Faustregel muss erst geschlagen werden"
-> „Es gibt eine alte Faustregel: *morgen wird es wie heute.* Die klingt nach
-> nichts und ist erstaunlich schwer zu schlagen.
+### 3. The courier who only comes when needed
+> "When the alarm rings, a courier collects the values, carries them to the
+> archive, and leaves.
 >
-> Wir haben daraus eine Aufnahmeprüfung gemacht: **Ein neues Modell geht nur in
-> Betrieb, wenn es die Faustregel um mindestens zwei Prozent schlägt.** Sonst
-> bleibt das alte.
+> **This is the trick that makes the whole thing cheap.** We do not rent an
+> office where somebody sits and waits all day. We pay the courier for the thirty
+> seconds he is out. The rest of the day he costs nothing."
+
+**The single most important cost statement. Say it slowly.**
+
+### 4. The archive
+> "Everything goes into an archive. **Nothing is ever overwritten.** The sheet
+> from the day before yesterday is exactly where it belongs.
 >
-> Das ist die Regel, die uns davor schützt, Fortschritt zu behaupten, wo keiner
-> ist."
+> Why that matters: if in six months somebody asks *how did you arrive at that
+> forecast* — we can reconstruct the day exactly. With the data from then, not
+> today's."
+
+### 5. The forecaster
+> "The forecaster has looked at ten years of weather and learned the patterns. He
+> does not sit at his desk all day — he is woken when someone asks, answers in
+> half a second, and goes back to sleep.
+>
+> He too only costs money while he works."
+
+### 6. The front desk
+> "In front of the forecaster sits a receptionist. He takes requests, checks they
+> make sense, and lets through **at most two per second** — so nobody can
+> overrun the forecaster.
+>
+> Behind that sits the app you'll see in a moment."
 
 ---
 
-## 7:30 – 9:00 · Was es kostet und was passiert, wenn es kaputtgeht *(Faktenfolie + Bild)*
+## 6:30 – 7:30 · Why we built it this way
 
-### Die Kosten
-> „**47 Cent im Monat.** Fertig ausgebaut etwa 1,40.
->
-> Und jetzt das Komische daran: Der größte Posten sind nicht die Messungen und
-> nicht der Meteorologe. **Der größte Posten sind die Rauchmelder** — die
-> Überwachung kostet mehr als alles, was sie überwacht.
->
-> Das ist bei kleinen Systemen normal. Wir könnten sie abschalten und auf zehn
-> Cent kommen. Dann würde nur niemand merken, wenn etwas schiefgeht."
+> "Three decisions, and all three save money or trouble."
 
-### Der Alarm, der zählt
-> „Wir haben fünf Alarme. Vier davon melden, wenn etwas **kaputt** ist — das ist
-> der einfache Fall.
+### "Nobody sits around waiting"
+> "Had we rented a fixed server, it would run day and night and cost money every
+> month — including three in the morning on a Sunday when nobody is asking.
+> Instead we pay per request.
 >
-> Der fünfte ist der wichtige: **er meldet, wenn nichts passiert.**
->
-> Stellen Sie sich vor, die Messstationen hören auf zu senden. Nichts stürzt ab,
-> keine Fehlermeldung, die App antwortet weiter freundlich. Nur: der Meteorologe
-> sagt Ihnen das Wetter von letztem Monat, und niemand weiß es.
->
-> **Das ist der gefährlichste Ausfall — der, der aussieht wie Normalbetrieb.**
-> Deshalb schlägt ein Alarm, wenn vier Tage lang niemand die Stationen abgelesen
-> hat."
+> **The difference: roughly 90 dollars a month against 47 cents.**"
 
-**Auf der Folie:** ein Rauchmelder mit Spinnweben.
+### "One worksheet, not two"
+> "The forecaster trained with a particular worksheet. On the job he uses
+> **exactly the same one** — not a copy.
+>
+> It sounds pedantic. It is the most common way systems like this break: two
+> worksheets that agree on day one and slowly drift apart. The forecasts become
+> quietly wrong. **Nobody notices**, because no error message appears anywhere."
+
+### "The rule of thumb has to be beaten first"
+> "There is an old rule of thumb: *tomorrow will be like today.* It sounds like
+> nothing and is surprisingly hard to beat.
+>
+> We turned it into an entrance exam: **a new model only goes into service if it
+> beats the rule of thumb by at least two percent.** Otherwise the old one stays.
+>
+> That is the rule that stops us claiming progress where there is none."
 
 ---
 
-## 9:00 – 10:00 · Live zeigen und Schluss
+## 7:30 – 9:00 · What it costs, and what happens when it breaks
 
-**Browser öffnen, Datum stehen lassen, auf „Forecast" drücken.**
+### The cost *(fact slide)*
+> "**47 cents a month.** Fully built out, about 1.40.
+>
+> And here is the odd part: the largest item is not the measuring and not the
+> forecaster. **The largest item is the smoke detectors** — the monitoring costs
+> more than everything it monitors.
+>
+> That is normal at this size. We could switch it off and get to ten cents. Then
+> nobody would notice when something goes wrong."
 
-> „Das hier ist die App. Ein Knopf.
+### The alarm that matters
+> "We have five alarms. Four report when something is **broken** — the easy case.
 >
-> Was in dieser halben Sekunde passiert: Der Empfang nimmt die Frage an, weckt
-> den Meteorologen, der holt sich die aktuellen Messwerte, rechnet sein
-> Rechenblatt durch, schaut auf seine gelernten Muster — und antwortet.
+> The fifth is the important one: **it reports when nothing happens.**
 >
-> **Plus/minus 33 Dollar.** Morgen wird ein ruhiger Tag."
-
-### Der Schlusssatz
-> „Das Besondere an diesem System ist nicht, dass es den Goldpreis vorhersagt.
-> Das kann es nämlich nicht, und das sagt es auch.
+> Imagine the measuring stations stop sending. Nothing crashes, no error, the app
+> keeps answering politely. Only the forecaster is giving you last month's
+> weather, and nobody knows.
 >
-> Das Besondere ist, dass es **jeden Tag von allein arbeitet, sich meldet wenn
-> etwas nicht stimmt, und selbst sagen kann, wie gut es ist.**
->
-> Für 47 Cent im Monat."
+> **That is the most dangerous failure — the one that looks like normal
+> operation.** So an alarm fires if nobody has read the stations for four days."
 
 ---
 
-## Wenn Fragen kommen
+## 9:00 – 10:00 · Show it live, and close
 
-**„Können wir damit Geld verdienen?"**
-> „So nicht. Es sagt nicht, ob der Preis steigt. Es sagt, wie unruhig es wird —
-> das ist nützlich, wenn man Risiko einschätzen muss, nicht wenn man wetten will."
+**Open the browser, leave the date empty, press Forecast.**
 
-**„Warum nur 2,9 Prozent besser? Das klingt wenig."**
-> „Das ist es auch. Es ist aber ein **ehrliches** Ergebnis, auf Daten, die das System
-> nie gesehen hat. Mir wäre eine Zahl, die beeindruckend klingt und nicht hält,
-> deutlich unangenehmer."
+> "This is the app. One button.
+>
+> What happens in that half second: the front desk takes the question, wakes the
+> forecaster, he pulls the current readings, works through his worksheet, looks
+> at the patterns he learned — and answers.
+>
+> **Plus or minus 33 dollars.** Tomorrow will be a quiet day."
 
-**„Was, wenn es ausfällt?"**
-> „Dann bekomme ich eine Mail. Und das System hält nichts an, was Geld kostet —
-> wenn niemand fragt, läuft auch nichts."
-
-**„Wie lange hat das gedauert?"**
-> „Zwei Wochen, allein, neben dem Kurs."
+### The closing line
+> "What is special about this system is not that it predicts the gold price. It
+> cannot, and it says so.
+>
+> What is special is that it **works on its own every day, speaks up when
+> something is wrong, and can tell you how good it is.**
+>
+> For 47 cents a month."
 
 ---
 
-## Spickzettel: die vier Zahlen
+## If questions come
+
+**"Can we make money with this?"**
+> "Not like this. It doesn't say whether the price goes up. It says how unsettled
+> it will be — useful for judging risk, not for betting."
+
+**"Why only 2.9 percent better? That sounds small."**
+> "It is small. But it is an **honest** number, on data the system never saw. A
+> number that sounds impressive and doesn't hold would bother me a lot more."
+
+**"What if it fails?"**
+> "I get an email. And nothing it runs costs money while idle — if nobody asks,
+> nothing runs."
+
+**"How long did this take?"**
+> "Two weeks, on my own, alongside the course."
+
+---
+
+## Cheat sheet: the four numbers
 
 | | |
 |---|---|
-| **47 Cent** | pro Monat, gemessen |
-| **2,9 %** | besser als die Bauernregel, auf nie gesehenen Daten |
-| **± 33 Dollar** | die heutige Vorhersage |
-| **0,5 Sekunden** | bis die Antwort da ist |
+| **47 cents** | per month, measured |
+| **2.9 %** | better than the rule of thumb, on data never seen |
+| **± 33 dollars** | today's forecast |
+| **0.5 seconds** | until the answer arrives |

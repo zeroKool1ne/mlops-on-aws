@@ -22,6 +22,7 @@ from fastapi.responses import HTMLResponse
 
 from src.api import serving
 from src.api.schemas import (
+    BaselineResponse,
     HealthResponse,
     ModelCardResponse,
     PredictRequest,
@@ -51,6 +52,26 @@ app = FastAPI(
     license_info={"name": "MIT", "url": "https://opensource.org/licenses/MIT"},
     contact={"name": "Daniel Vasić", "url": "https://github.com/zeroKool1ne/mlops-on-aws"},
 )
+
+
+def _evaluation() -> dict | None:
+    """Holdout metrics from the artifact, or None if they were not shipped.
+
+    Lives next to the model in model.tar.gz, so the metrics travel with the
+    weights they describe. A model card assembled from a file somewhere else
+    is a model card that can disagree with the model.
+    """
+    import json
+    from pathlib import Path
+
+    try:
+        path = Path(serving.MODEL_DIR) / "evaluation.json"
+        if not path.exists() and serving.LOCAL_CACHE.exists():
+            path = serving.LOCAL_CACHE / "evaluation.json"
+        return json.loads(path.read_text()) if path.exists() else None
+    except Exception:
+        log.warning("evaluation artifact unreadable", exc_info=True)
+        return None
 
 
 @app.get("/health", response_model=HealthResponse, tags=["operations"],
@@ -111,16 +132,7 @@ def model_card() -> ModelCardResponse:
     if meta is None:
         raise HTTPException(status_code=503, detail="No model artifact available")
 
-    evaluation = None
-    try:
-        import json
-        from pathlib import Path
-
-        path = Path(serving.MODEL_DIR) / "evaluation.json"
-        if path.exists():
-            evaluation = json.loads(path.read_text())
-    except Exception:
-        pass
+    evaluation = _evaluation()
 
     return ModelCardResponse(
         target=meta["target"],
@@ -129,6 +141,56 @@ def model_card() -> ModelCardResponse:
         training_window=meta["training_window"],
         hyperparameters=meta["hyperparameters"],
         evaluation=evaluation,
+    )
+
+
+@app.get("/baseline", response_model=BaselineResponse, tags=["operations"],
+         summary="Model versus the naive baseline")
+
+
+@app.get("/baseline", response_model=BaselineResponse, tags=["operations"],
+         summary="Model versus the naive baseline")
+def baseline() -> BaselineResponse:
+    """How much better than doing nothing clever — on data the model never saw.
+
+    This is the number the project is actually about. A forecasting service
+    that cannot state its margin over a naive baseline is asking to be trusted
+    on the strength of having been built.
+
+    RMSE rather than MAE, and the two disagree here: the model makes fewer
+    large misses at the cost of a larger typical error. For a volatility
+    forecast that is the trade worth making — the day the model calls quiet and
+    the market is not is the day that costs money — so the promotion gate
+    decides on RMSE. The disagreement is in `evaluation` on /model rather than
+    hidden.
+    """
+    evaluation = _evaluation()
+    if evaluation is None:
+        raise HTTPException(
+            status_code=503,
+            detail="No evaluation artifact available. The model has not been scored "
+                   "against a holdout in this deployment.",
+        )
+
+    improvement = evaluation["improvement_over_baseline_pct"]
+    required = evaluation.get("min_improvement_required_pct", 0.0)
+
+    if improvement < 0:
+        verdict = "worse than the baseline — this model should not be promoted"
+    elif improvement < required:
+        verdict = (f"better than the baseline by {improvement:.2f} %, but under the "
+                   f"{required:.1f} % promotion threshold")
+    else:
+        verdict = (f"beats the baseline by {improvement:.2f} % on "
+                   f"{evaluation['n_holdout_rows']} untouched days")
+
+    return BaselineResponse(
+        target=evaluation["target"],
+        metric="rmse",
+        model_score=evaluation["model"]["rmse"],
+        baseline_score=evaluation["baseline"]["rmse"],
+        improvement_pct=improvement,
+        verdict=verdict,
     )
 
 

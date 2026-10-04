@@ -66,3 +66,14 @@ class ModelCardResponse(BaseModel):
     training_window: list[str]
     hyperparameters: dict
     evaluation: dict | None = None
+
+
+class BaselineResponse(BaseModel):
+    """How the model compares with doing nothing clever."""
+
+    target: str
+    metric: str
+    model_score: float
+    baseline_score: float
+    improvement_pct: float
+    verdict: str

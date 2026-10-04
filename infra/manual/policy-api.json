@@ -5,7 +5,7 @@
             "Sid": "ReadModelArtifact",
             "Effect": "Allow",
             "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::goldmlops-data-686699774218/models/*"
+            "Resource": "arn:aws:s3:::goldmlops-data-<ACCOUNT_ID>/models/*"
         },
         {
             "Sid": "WriteOwnLogs",
@@ -14,7 +14,7 @@
                 "logs:CreateLogStream",
                 "logs:PutLogEvents"
             ],
-            "Resource": "arn:aws:logs:us-east-1:686699774218:log-group:/aws/lambda/goldmlops-api:*"
+            "Resource": "arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/aws/lambda/goldmlops-api:*"
         }
     ]
 }

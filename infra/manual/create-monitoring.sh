@@ -7,10 +7,8 @@
 # Nothing errors in that case - the feature table just stops growing and the
 # model keeps serving a world that is weeks old. "No invocation in 36 hours" is
 # the only way to see it.
-set -e
+source "$(dirname "$0")/_env.sh"
 
-REGION=us-east-1
-ACCOUNT=686699774218
 API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='goldmlops-api'].ApiId | [0]" --output text)
 
 # SNS topic for alarm actions. Subscribing an address is left to a human: it
@@ -100,7 +98,7 @@ cat > /tmp/dashboard.json <<JSON
    "metrics":[["AWS/Lambda","Duration","FunctionName","goldmlops-ingest",{"stat":"Maximum"}]]}},
  {"type":"metric","x":12,"y":12,"width":12,"height":6,"properties":{
    "title":"Data lake size","region":"$REGION","period":86400,"stat":"Average",
-   "metrics":[["AWS/S3","BucketSizeBytes","BucketName","goldmlops-data-$ACCOUNT","StorageType","StandardStorage"]]}}
+   "metrics":[["AWS/S3","BucketSizeBytes","BucketName","$BUCKET","StorageType","StandardStorage"]]}}
 ]}
 JSON
 aws cloudwatch put-dashboard --dashboard-name goldmlops \

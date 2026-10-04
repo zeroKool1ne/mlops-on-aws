@@ -6,12 +6,10 @@
 # from Yahoo, which can exceed 30 s. API Gateway returns 504, but the function
 # finishes and the container stays warm - so the next request is fast. Cutting
 # the function off at 29 s would throw that warm container away.
-set -e
+source "$(dirname "$0")/_env.sh"
 
-FN=goldmlops-api
-IMAGE=686699774218.dkr.ecr.us-east-1.amazonaws.com/goldmlops-api:latest
-ROLE=arn:aws:iam::686699774218:role/goldmlops-lambda-api
-BUCKET=goldmlops-data-686699774218
+FN=$PROJECT-api
+ROLE="arn:aws:iam::$ACCOUNT:role/$PROJECT-lambda-api"
 
 if aws lambda get-function --function-name "$FN" >/dev/null 2>&1; then
     echo "--- existiert, aktualisiere Code und Konfiguration"

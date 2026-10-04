@@ -8,12 +8,10 @@
 # catches everything else and lets FastAPI do its own routing, which is what
 # keeps the API surface defined in one place (src/api/main.py) instead of split
 # between the code and the gateway.
-set -e
+source "$(dirname "$0")/_env.sh"
 
-NAME=goldmlops-api
-REGION=us-east-1
-ACCOUNT=686699774218
-FN_ARN="arn:aws:lambda:$REGION:$ACCOUNT:function:goldmlops-api"
+NAME=$PROJECT-api
+FN_ARN="arn:aws:lambda:$REGION:$ACCOUNT:function:$PROJECT-api"
 
 API_ID=$(aws apigatewayv2 get-apis --query "Items[?Name=='$NAME'].ApiId | [0]" --output text)
 if [[ "$API_ID" == "None" || -z "$API_ID" ]]; then

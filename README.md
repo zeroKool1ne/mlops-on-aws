@@ -49,10 +49,17 @@ someone who has never seen it.
 
 ![Architecture overview](docs/diagrams/01_architecture_overview.png)
 
-**The API is live:**
+**The API is deployed and running.** Its URL is available on request rather than
+printed here: the endpoint is public and unauthenticated so that it can be
+demonstrated, and AWS has no hard spending cap — only rate limits and alarms. A
+published URL is an open invitation that cannot be withdrawn once it is in a
+commit. A live demonstration, a demo page and the generated `/docs` are a
+message away.
+
+What a call looks like:
 
 ```bash
-curl -s -X POST https://u6dprnx3yb.execute-api.us-east-1.amazonaws.com/predict \
+curl -s -X POST "$API_URL/predict" \
   -H 'content-type: application/json' -d '{"date": "2026-10-02"}'
 ```
 
@@ -62,8 +69,8 @@ curl -s -X POST https://u6dprnx3yb.execute-api.us-east-1.amazonaws.com/predict \
  "served_by": "local", "latency_ms": 527}
 ```
 
-There is a demo page at [the same host](https://u6dprnx3yb.execute-api.us-east-1.amazonaws.com/)
-and generated API documentation at `/docs`.
+Everything also runs locally with no AWS account at all — see
+[Getting started](#getting-started).
 
 Components marked **(planned)** on the diagrams are designed and not provisioned — the
 training job, the model registry, the SageMaker endpoint (ADR-15), the drift Lambda and

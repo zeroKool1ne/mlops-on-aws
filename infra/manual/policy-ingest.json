@@ -6,8 +6,8 @@
             "Effect": "Allow",
             "Action": "s3:PutObject",
             "Resource": [
-                "arn:aws:s3:::goldmlops-data-686699774218/raw/*",
-                "arn:aws:s3:::goldmlops-data-686699774218/features/*"
+                "arn:aws:s3:::goldmlops-data-<ACCOUNT_ID>/raw/*",
+                "arn:aws:s3:::goldmlops-data-<ACCOUNT_ID>/features/*"
             ]
         },
         {
@@ -17,7 +17,7 @@
                 "logs:CreateLogStream",
                 "logs:PutLogEvents"
             ],
-            "Resource": "arn:aws:logs:us-east-1:686699774218:log-group:/aws/lambda/goldmlops-ingest:*"
+            "Resource": "arn:aws:logs:<REGION>:<ACCOUNT_ID>:log-group:/aws/lambda/goldmlops-ingest:*"
         }
     ]
 }

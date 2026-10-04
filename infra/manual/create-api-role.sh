@@ -3,18 +3,18 @@
 # ever reads the model artifact, so it gets GetObject on models/ and nothing
 # else. It does not need the feature table - predict_fn fetches a year of
 # market data from Yahoo at request time (see src/models/inference.py).
-set -e
+source "$(dirname "$0")/_env.sh"
 
-ROLE=goldmlops-lambda-api
+ROLE=$PROJECT-lambda-api
 
 aws iam get-role --role-name "$ROLE" >/dev/null 2>&1 \
     || aws iam create-role --role-name "$ROLE" \
         --description "Read the model artifact and write its own logs" \
-        --assume-role-policy-document file://infra/manual/trust-lambda.json
+        --assume-role-policy-document "file://$(render infra/manual/trust-lambda.json)"
 
 aws iam put-role-policy --role-name "$ROLE" \
     --policy-name api-permissions \
-    --policy-document file://infra/manual/policy-api.json
+    --policy-document "file://$(render infra/manual/policy-api.json)"
 
 aws logs describe-log-groups --log-group-name-prefix /aws/lambda/goldmlops-api \
     --query 'logGroups[0]' --output text | grep -q goldmlops-api \

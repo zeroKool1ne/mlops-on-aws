@@ -259,3 +259,28 @@ Two further defects were found and fixed at the same time:
 **What would be better.** PSI on engineered features is a proxy for the thing that actually matters, which is whether predictions have got worse. Here the labels arrive with a one-day lag, so prediction error *could* be monitored directly — that is strictly the stronger signal and the right next step. It is not in this version because it needs prediction history accumulated over months, and this project is three weeks old.
 
 **In plain terms.** We measured how much our own alarm goes off when nothing is wrong, and set it above that. The standard threshold everyone quotes would have made it ring every single day.
+
+---
+
+## ADR-15 — Serving runs in the API Lambda; the SageMaker endpoint stays designed, not deployed
+
+**Chosen:** The prediction request is answered inside the API Lambda, which loads `model.tar.gz` from S3 once per cold start and predicts in-process. SageMaker Serverless Inference (ADR-1) remains the designed production path and is selected by setting `SAGEMAKER_ENDPOINT`; it is not provisioned.
+
+**Alternatives:** Provision Serverless Inference on a managed scikit-learn container · provision it on a custom container (BYOC) · retrain the model inside whichever scikit-learn version the managed container offers · remove the SageMaker path from the design entirely
+
+**Reasoning.** The model artifact is a pickle, and `requirements-api.txt` pins scikit-learn to the exact version that wrote it, with a comment explaining why: unpickling an estimator under a different version is a documented source of silently wrong predictions — wrong answers, not errors. SageMaker's managed scikit-learn containers track their own release schedule and do not generally offer the current version, so the managed route forces a choice between an unpinned unpickle and retraining inside their version. Retraining there would mean the numbers in this repository were produced by one library version and served by another, which is exactly the inconsistency the pin exists to prevent.
+
+That leaves a custom container, which is a real option and the right one eventually. It is not a one-day option: a SageMaker serving container has its own contract (`/ping`, `/invocations`, port 8080) that the Lambda runtime interface does not satisfy, so it is a second image with a second build and a second thing to keep in step with the first.
+
+Against that, measured: the Lambda path answers a cold request in **2.1 s** and a warm one in **0.5 s**, against API Gateway's 30 s ceiling. At this volume the endpoint would buy no latency and no throughput — it would buy a second place where the model can be stale and a second cold start in front of the first.
+
+**Trade-off.** Four real costs, and the first two are the ones that would decide this differently at scale.
+
+- **Serving cannot scale separately from the API.** One Lambda concurrency limit now governs both request handling and model execution. With a real traffic pattern these want different limits.
+- **No data capture.** SageMaker endpoints log request/response pairs to S3 as a built-in; here that would have to be written by hand. That is the input the drift monitor would most like to have (ADR-14 says prediction-error monitoring is the stronger signal, and this is how you would feed it).
+- **The model has to fit in a Lambda.** 290 KB today against a 10 GB image limit, so this is not binding — but it is a ceiling that the endpoint does not have.
+- **The project cannot claim SageMaker serving.** The architecture diagrams mark the endpoint `(planned)` rather than implying it runs.
+
+**What would be better.** Build one image that satisfies both contracts — the Lambda runtime interface and SageMaker's HTTP contract — from the same `src/`, so there is still one codebase and one dependency set. Then provision the endpoint, set `SAGEMAKER_ENDPOINT`, and turn on data capture. `serving.py` already branches on that variable, so the switch costs no code change; the work is entirely in the image and the provisioning.
+
+**In plain terms.** The model is pinned to a library version that AWS's ready-made container does not offer, and building our own container is a day's work that buys no speed at this size. So the model runs inside the API itself, the switch to move it is already in the code, and the diagram says `(planned)` instead of pretending.

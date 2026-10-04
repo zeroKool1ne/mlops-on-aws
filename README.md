@@ -49,6 +49,29 @@ someone who has never seen it.
 
 ![Architecture overview](docs/diagrams/01_architecture_overview.png)
 
+**The API is live:**
+
+```bash
+curl -s -X POST https://u6dprnx3yb.execute-api.us-east-1.amazonaws.com/predict \
+  -H 'content-type: application/json' -d '{"date": "2026-10-02"}'
+```
+
+```json
+{"feature_date": "2026-10-02", "current_price": 4162.30,
+ "predicted_volatility": 0.007961, "predicted_move_usd": 33.14,
+ "served_by": "local", "latency_ms": 527}
+```
+
+There is a demo page at [the same host](https://u6dprnx3yb.execute-api.us-east-1.amazonaws.com/)
+and generated API documentation at `/docs`.
+
+Components marked **(planned)** on the diagrams are designed and not provisioned — the
+training job, the model registry, the SageMaker endpoint (ADR-15), the drift Lambda and
+its alarms, and the GitHub Actions pipeline. Ingestion, the data lake, the registry
+bucket, the image, the API and its gateway are deployed and can be called. The design is
+unchanged; the diagrams simply say which half of it currently runs, because an
+architecture picture that does not is claiming more than it should.
+
 The system separates into two paths that run on completely different clocks. Keeping them
 apart is the central design decision:
 
@@ -261,7 +284,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 ├── notebooks/         # exploratory data analysis (10y, 2y, 1m windows)
 ├── infra/             # Terraform: all 46 AWS resources
 ├── docs/
-│   ├── decisions.md   # 14 architecture decision records
+│   ├── decisions.md   # 15 architecture decision records
 │   ├── model-card.md  # what the model is, and is not, for
 │   ├── aws-setup.md   # deployment, cost, teardown, troubleshooting
 │   └── diagrams/      # architecture diagrams as code
@@ -275,7 +298,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 
 | Document | Contents |
 |---|---|
-| [Architecture decisions](docs/decisions.md) | All 14 design choices, their alternatives and their trade-offs — including the two that turned out wrong and had to be amended |
+| [Architecture decisions](docs/decisions.md) | All 15 design choices, their alternatives and their trade-offs — including the two that turned out wrong and had to be amended |
 | [Model card](docs/model-card.md) | Metrics, intended use, limitations, and what this model must not be used for |
 | [AWS setup guide](docs/aws-setup.md) | Deployment from scratch, verification, measured cost estimate, teardown, troubleshooting |
 | API reference | Generated from the code, served at `/docs` on the running API |

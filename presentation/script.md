@@ -8,6 +8,43 @@
 
 ---
 
+## Tonfall — der schmale Grat
+
+Dein Publikum ist **fachfremd, nicht begriffsstutzig**, und hält vermutlich das
+Budget. Zwischen „anschaulich erklärt" und „der hält mich für dumm" liegt kein
+großer Abstand, und er entscheidet sich fast nur im Tonfall.
+
+**Die Haltung:** Die Metapher ist da, weil *das Thema* fremd ist — nicht, weil
+der Zuhörer langsam wäre. Also benutze sie selbstverständlich und entschuldige
+dich nie dafür.
+
+**Diese Sätze nicht sagen:**
+
+| Nicht | Weil |
+|---|---|
+| „Ganz einfach gesagt …" | kündigt an, dass du herunterschaltest |
+| „Das ist jetzt stark vereinfacht" | klingt nach *für Sie reicht die Kinderversion* |
+| „Ist das soweit klar?" | prüft den Zuhörer ab wie im Unterricht |
+| „Sie müssen das nicht verstehen" | genau das Gegenteil von dem, was du willst |
+| „Im Prinzip ist das wie …" | das abschwächende *im Prinzip* schwächt dich mit |
+
+**Stattdessen** einfach das Bild benutzen, ohne es anzukündigen. „Jeden Abend
+werden fünf Messgeräte abgelesen" braucht kein *stellen Sie sich vereinfacht
+vor*.
+
+**Der eine Satz, der den ganzen Grat entschärft** — gleich in der ersten Minute,
+nach dem Einstieg:
+
+> „Ich erkläre das entlang eines Bildes, weil es die kürzeste Erklärung ist.
+> Wenn Sie an irgendeiner Stelle die technischen Details wollen — sagen Sie es,
+> ich habe sie dabei."
+
+Damit gibst du die Kontrolle ab. Wer selbst entscheiden darf, wie tief es geht,
+fühlt sich nicht herabgesetzt. Und du zeigst nebenbei, dass unter dem Bild etwas
+liegt.
+
+---
+
 ## Der rote Faden
 
 Wir haben **einen Wetterdienst gebaut. Nur nicht für Regen, sondern für den Goldpreis.**
@@ -59,7 +96,29 @@ Das ist der wichtigste Teil. Er macht dich glaubwürdig, bevor du irgendetwas ve
 
 ---
 
-## 2:30 – 6:00 · Wie es gebaut ist — sechs Stationen
+## 2:30 – 3:30 · Die Zahlen dazu *(Faktenfolie)*
+
+Direkt nach dem Bild die nüchterne Folie. Der Wechsel ist Absicht: erst das
+Bild, dann der Beleg.
+
+> „Hier sind die Zahlen dahinter.
+>
+> Wir messen gegen eine Faustregel — *morgen wird es wie heute*. Die ist bei
+> Finanzdaten erstaunlich schwer zu schlagen.
+>
+> Unser Modell schlägt sie um **2,9 Prozent**. Geprüft an **126 Handelstagen,
+> die es vorher nie gesehen hat** — das ist der Punkt, nicht die 2,9.
+>
+> Bei der Richtung liegen wir bei fünfzig Prozent. Das ist Münzwurf, und das
+> steht so auf der Folie, weil es dazugehört."
+
+**Wenn jemand nachhakt, warum nur 2,9 %:** *„Weil das die ehrliche Zahl ist. Ich
+könnte Ihnen eine schönere zeigen, wenn ich das Modell auf denselben Daten
+prüfe, auf denen es gelernt hat. Die wäre dann nur nichts wert."*
+
+---
+
+## 3:30 – 6:30 · Wie es gebaut ist — sechs Stationen
 
 Pro Station: **ein Satz Bild, ein Satz Technik, ein Satz Warum.** Nicht mehr.
 
@@ -111,7 +170,7 @@ Pro Station: **ein Satz Bild, ein Satz Technik, ein Satz Warum.** Nicht mehr.
 
 ---
 
-## 6:00 – 7:30 · Warum wir es so gebaut haben
+## 6:30 – 7:30 · Warum wir es so gebaut haben
 
 > „Drei Entscheidungen, und alle drei sparen Geld oder Ärger."
 
@@ -131,20 +190,20 @@ Pro Station: **ein Satz Bild, ein Satz Technik, ein Satz Warum.** Nicht mehr.
 > auseinander. Die Vorhersagen werden still falsch. **Niemand merkt es**, weil
 > nirgendwo eine Fehlermeldung erscheint."
 
-### „Der Bauernregel-Opa muss geschlagen werden"
-> „Es gibt in jedem Dorf einen alten Mann, der sagt: *‚Morgen wird's wie heute.'*
-> Er hat erstaunlich oft recht.
+### „Die Faustregel muss erst geschlagen werden"
+> „Es gibt eine alte Faustregel: *morgen wird es wie heute.* Die klingt nach
+> nichts und ist erstaunlich schwer zu schlagen.
 >
-> Wir haben die Regel aufgestellt: **Ein neuer Meteorologe kommt nur in den
-> Dienst, wenn er den Opa um mindestens zwei Prozent schlägt.** Sonst behalten
-> wir den alten.
+> Wir haben daraus eine Aufnahmeprüfung gemacht: **Ein neues Modell geht nur in
+> Betrieb, wenn es die Faustregel um mindestens zwei Prozent schlägt.** Sonst
+> bleibt das alte.
 >
-> Unserer schlägt ihn um **2,9 Prozent** — gemessen an einem halben Jahr, das er
-> vorher nie gesehen hat."
+> Das ist die Regel, die uns davor schützt, Fortschritt zu behaupten, wo keiner
+> ist."
 
 ---
 
-## 7:30 – 9:00 · Was es kostet und was passiert, wenn es kaputtgeht
+## 7:30 – 9:00 · Was es kostet und was passiert, wenn es kaputtgeht *(Faktenfolie + Bild)*
 
 ### Die Kosten
 > „**47 Cent im Monat.** Fertig ausgebaut etwa 1,40.
@@ -204,7 +263,7 @@ Pro Station: **ein Satz Bild, ein Satz Technik, ein Satz Warum.** Nicht mehr.
 > das ist nützlich, wenn man Risiko einschätzen muss, nicht wenn man wetten will."
 
 **„Warum nur 2,9 Prozent besser? Das klingt wenig."**
-> „Ist es auch. Es ist aber ein **ehrliches** Ergebnis, auf Daten, die das System
+> „Das ist es auch. Es ist aber ein **ehrliches** Ergebnis, auf Daten, die das System
 > nie gesehen hat. Mir wäre eine Zahl, die beeindruckend klingt und nicht hält,
 > deutlich unangenehmer."
 

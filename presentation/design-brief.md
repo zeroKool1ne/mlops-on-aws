@@ -1,118 +1,186 @@
 # Design-Brief — zum Weitergeben an Claude Design
 
 > **Anleitung für Daniel:** Alles ab der Trennlinie markieren, kopieren, in Claude
-> Design einfügen. Der Begleittext zum Sprechen steht in [`script.md`](script.md)
-> und wird **nicht** mitgeschickt — die Folien sollen fast ohne Text auskommen.
+> Design einfügen. Der Sprechtext steht in [`script.md`](script.md) und wird
+> **nicht** mitgeschickt — die Folien sollen fast ohne Text auskommen.
 
 ---
 
-Bitte baue mir ein Foliendeck mit **10 Folien** für einen 10-minütigen Vortrag.
+Bitte baue mir ein Foliendeck mit **12 Folien** für einen 10-minütigen Vortrag
+vor einer Entscheiderin oder einem Entscheider ohne technischen Hintergrund.
 
-## Das Wichtigste zuerst: der Stil
+## Zuerst: was dieses Deck NICHT sein darf
 
-Das ist **kein** Business-Deck. Es ist ein **illustriertes Bilderbuch**, das
-zufällig eine Software erklärt.
+Das Publikum ist fachfremd, **nicht begriffsstutzig** — und hält vermutlich das
+Budget. Der Unterschied ist der ganze Stil:
 
-- **Illustrationen, keine Infografiken.** Keine Kästen mit Pfeilen, keine
-  Flussdiagramme, keine Icon-Raster. Gezeichnete Szenen mit Figuren, Gebäuden,
-  Landschaft — wie aus einem Kinderbuch.
-- **Die Messlatte:** Ein fünfjähriges Kind sieht die Folie und versteht, *was da
-  passiert*, ohne ein Wort zu lesen.
-- **Warmer, handgezeichneter Look.** Weiche Linien, freundliche Farben, leichte
-  Unregelmäßigkeit. Lieber Aquarell als Vektorgrafik. Figuren mit einfachen,
-  freundlichen Gesichtern.
-- **Maximal 8 Wörter Text pro Folie.** Die Zahlen dürfen groß sein. Alles andere
-  wird gesprochen, nicht gelesen.
-- **Keine Logos, keine Markennamen, keine Produktnamen.** Kein AWS, kein Python,
-  kein Docker — weder im Bild noch im Text.
+| Nicht | Sondern |
+|---|---|
+| Kinderbuch, Cartoon, Comic-Gesichter | **Redaktionelle Illustration**, wie in einer guten Wochenzeitung |
+| Kulleraugen, Sprechblasen, Ausrufezeichen | Zurückhaltende, erwachsene Figuren |
+| Knallige Primärfarben | Gedeckte, abgestimmte Palette |
+| „Ganz einfach erklärt" | Einfach erklärt, ohne es dazuzusagen |
+
+**Die Messlatte bleibt:** Jemand soll das Bild ansehen und verstehen, was
+passiert, ohne ein Wort zu lesen. Aber das Bild darf dabei nicht aussehen, als
+wäre es für Kinder gemacht. Die Metapher ist da, weil **das Thema** fremd ist —
+nicht, weil der Zuschauer langsam wäre.
+
+Als Referenz: die Illustrationen zu einer langen Reportage im *Economist*, der
+*ZEIT* oder im *New Yorker*. Handgezeichnet und warm, aber ruhig, präzise und
+erwachsen.
+
+## Der Stil
+
+- **Illustration statt Infografik.** Keine Kästen mit Pfeilen, keine
+  Flussdiagramme, keine Icon-Raster. Gezeichnete Szenen.
+- **Technik:** Tuschelinie mit flächigem Aquarell oder Gouache. Sichtbarer
+  Strich, leichte Unregelmäßigkeit — handgemacht, nicht vektorglatt.
+- **Palette:** gedecktes Gold/Ocker, Graublau, Salbeigrün, warmes Papierweiß.
+  Ein einziger kräftiger Akzent (gedämpftes Rot), sparsam eingesetzt.
+- **Figuren:** stilisiert, von hinten oder halb abgewandt, Gesichter angedeutet
+  statt ausgezeichnet. Keine Comic-Mimik.
+- **Keine Logos, keine Produkt- oder Markennamen** — weder im Bild noch im Text.
+
+## Der Aufbau jeder Bildfolie
+
+Zehn der zwölf Folien sind Bildfolien. Alle gleich aufgebaut:
+
+```
+┌───────────────────────────────────────┐
+│                                       │
+│          ILLUSTRATION                 │   ca. 70 % der Fläche
+│                                       │
+│                                       │
+├───────────────────────────────────────┤
+│  47 ¢ / Monat        ·   0,5 Sekunden │   Faktenstreifen
+└───────────────────────────────────────┘
+```
+
+Der **Faktenstreifen** ist eine schmale Zeile am unteren Rand: ein bis zwei harte
+Angaben, nüchterne Groteskschrift, kein Schmuck, klar abgesetzt vom Bild. Er
+sorgt dafür, dass **keine Folie ohne eine überprüfbare Zahl** ist.
+
+Über dem Bild steht eine Überschrift von **höchstens sechs Wörtern**.
 
 ## Die durchgehende Welt
 
-Alle zehn Folien spielen in **einem kleinen Wetterdienst**. Dieselbe Landschaft,
-dieselben Figuren, wiedererkennbar von Folie zu Folie. Ein Zuschauer soll das
-Gefühl haben, er begleitet jemanden durch ein Haus.
+Alle Bildfolien spielen in **einem kleinen Wetterdienst** — dieselbe Landschaft,
+dieselben Figuren, wiedererkennbar von Folie zu Folie.
 
 **Die wiederkehrenden Figuren:**
-- **Der Meteorologe** — freundlicher älterer Mann mit Brille, Strickjacke, Tasse
-  Tee. Ruhig, kompetent, ein bisschen verschlafen.
-- **Der Bote** — flinke kleine Figur mit Umhängetasche und Fahrrad. Immer in
-  Bewegung.
-- **Der Bauernregel-Opa** — knorriger alter Mann mit Hut, sitzt auf einem Zaun,
-  kaut einen Grashalm. Sympathisch, nicht lächerlich.
-- **Die Stakeholderin** — die Person, die die App benutzt. Normal gekleidet,
-  Smartphone in der Hand.
+- **Der Meteorologe** — ruhige ältere Person, Strickjacke, Lesebrille. Kompetent
+  und unaufgeregt. Kein Professor-Klischee, kein Chaos auf dem Schreibtisch.
+- **Die Botin** — zügige Figur mit Umhängetasche und Fahrrad, meist in Bewegung
+  oder im Anschnitt.
+- **Die ältere Beobachterin** — sitzt auf einem Zaun und schaut zum Himmel.
+  Steht für die Faustregel. **Würdevoll, nicht als Witzfigur.**
+- **Die Entscheiderin** — die Person, die am Ende die App benutzt.
 
-**Statt Regen und Sonne geht es um Gold.** Wo bei einem echten Wetterdienst eine
-Wolke hinge, hängt hier ein Goldbarren oder eine Goldmünze.
+Statt Regen und Sonne geht es um Gold: wo bei einem echten Wetterdienst eine
+Wolke hinge, hängt hier eine Goldmünze.
 
-## Die zehn Folien
+---
 
-**1 — Titel: Der Wetterdienst für Gold**
-Eine kleine Wetterstation auf einem grünen Hügel, Wimpel im Wind. Am Himmel
-statt einer Sonne eine große Goldmünze. Darunter nur der Titel.
+## Die zwölf Folien
 
-**2 — Was wir nicht können**
-Geteiltes Bild. Links: der Meteorologe zuckt mit den Schultern vor zwei Pfeilen,
-einer hoch, einer runter, beide dick rot durchgestrichen. Rechts: derselbe
-Meteorologe zeigt selbstbewusst auf zwei Wellenlinien — eine ganz ruhig, eine
-wild zackig — beide mit grünem Haken.
-Text: **„Wohin? Nein. Wie wild? Ja."**
+### 1 — Titel · *Der Wetterdienst für Gold*
+Eine kleine Wetterstation auf einer Hügelkuppe, früher Abend. Am Himmel statt
+der Sonne eine Goldmünze, tief stehend.
+**Faktenstreifen:** *Gold/USD · 10 Jahre Daten · 29 Messgrößen*
 
-**3 — Die Messstationen**
-Fünf kleine Messhäuschen auf einer Hügelkette, jedes mit einem anderen Gerät:
-eine Waage mit Goldbarren, ein Dollarzeichen-Windrad, ein Ölfass-Thermometer,
-ein Aktienkurven-Barometer und — das lustigste — ein „Angst-Messer", ein
-zitterndes Thermometer mit großen Augen. Abendstimmung.
+### 2 — *Wohin? Nein. Wie stark? Ja.*
+Geteiltes Bild, ruhig gesetzt. Links zwei Pfeile, hoch und runter, beide fein
+durchgestrichen. Rechts zwei Wellenlinien übereinander — eine ruhig, eine
+unruhig — beide mit einem schlichten Haken. Keine Figuren, reine Zeichensprache.
+**Faktenstreifen:** *Richtung: 50 % Trefferquote. Ausmaß: 2,9 % besser als die Faustregel.*
 
-**4 — Der Wecker und der Bote**
-Innen im Stationshaus. Ein großer altmodischer Wecker klingelt, Zeiger auf halb
-zwölf. Der Bote springt aus dem Bett, Tasche schon in der Hand. Durchs Fenster
-sieht man die fünf Messhäuschen im Dunkeln.
-Kleines Nebenbild in der Ecke: derselbe Bote schläft am Wochenende seelenruhig
-weiter, neben ihm ein durchgestrichener Wecker.
+### 3 — **FAKTENFOLIE: Die Ergebnisse**
+Kein Bild. Ruhige Typografie, viel Weißraum, eine Tabelle:
 
-**5 — Der Bote kostet nur, wenn er läuft**
-Zwei Bilder nebeneinander, deutlich kontrastiert.
-Links: ein großes leeres Bürogebäude, nachts beleuchtet, niemand drin, eine
-Geldkatze läuft trotzdem — Münzen fallen aus einem Hahn.
-Rechts: der Bote auf dem Fahrrad, hinter ihm eine einzelne kleine Münze.
-Text: **„90 € — oder 47 Cent."**
+| | Modell | Faustregel | Differenz |
+|---|---|---|---|
+| Treffgenauigkeit (RMSE) | 0,00958 | 0,00987 | **+2,9 %** |
+| Geprüft an | 126 Handelstagen, die das Modell nie gesehen hat | | |
+| Richtungsvorhersage | 49–51 % | 50 % | **kein Vorteil** |
 
-**6 — Das Archiv**
-Ein gemütlicher Kellerraum voller beschrifteter Schubladen und Aktenordner, nach
-Datum sortiert, Spinnweben in den Ecken, warmes Licht. Der Bote legt gerade
-einen neuen Zettel ab. **Wichtig: nichts wird weggeworfen** — ein Papierkorb
-steht in der Ecke und ist komplett leer und verstaubt.
+Darunter eine Zeile in kleiner Schrift: *Vier Verfahren getestet. Drei davon
+waren schlechter als nichts zu tun. Das steht hier, weil es dazugehört.*
+**Diese Folie darf dicht und nüchtern sein — der Kontrast zu den Bildern ist beabsichtigt.**
 
-**7 — Ein Rechenblatt, nicht zwei**
-Der Meteorologe als junger Mann in der Ausbildung und derselbe Meteorologe heute
-am Schreibtisch — und zwischen beiden schwebt **ein einziges** großes
-Rechenblatt, das beide benutzen, verbunden mit einer Linie.
-Daneben klein und blass die falsche Variante: zwei Rechenblätter, die langsam
-auseinanderdriften, auf einem stehen durcheinandergeratene Zahlen.
+### 4 — *Fünf Messstationen, jeden Abend*
+Fünf schlichte Messhäuschen auf einer Hügelkette in der Abenddämmerung, jedes
+mit einem anderen Instrument. Eines davon misst Nervosität — als zartes,
+zitterndes Barometer, **nicht** als Witzfigur.
+**Faktenstreifen:** *Gold · Dollar · Öl · Aktien · Volatilitätsindex*
 
-**8 — Der Bauernregel-Opa**
-Der Opa sitzt auf dem Zaun und sagt „Morgen wird's wie heute". Daneben steht der
-Meteorologe mit einem Zeugnis in der Hand, auf dem groß **2,9 %** steht. Eine
-Prüfungskommission aus drei freundlichen Eulen nickt anerkennend.
-Text: **„Nur besser als der Opa kommt rein."**
+### 5 — *Ein Wecker, und niemand muss daran denken*
+Innenraum, Nacht. Ein Wecker auf halb zwölf. Die Botin greift nach ihrer Tasche.
+Durchs Fenster die dunklen Messhäuschen.
+**Faktenstreifen:** *23:30 UTC · Montag bis Freitag · seit dem 3. Oktober ohne Ausfall*
 
-**9 — Der Rauchmelder mit Spinnweben**
-Das Stationshaus, alles sieht friedlich aus — aber die Messhäuschen auf dem
-Hügel sind dunkel und verwaist, Gras wächst darüber. Im Haus blinkt ein
-Rauchmelder und weckt den Meteorologen.
-Text: **„Der schlimmste Ausfall sieht aus wie Normalbetrieb."**
+### 6 — *Bezahlt für die Fahrt, nicht fürs Dasein*
+Zwei Szenen nebeneinander. Links ein beleuchtetes, leeres Bürogebäude bei Nacht.
+Rechts die Botin auf dem Fahrrad, eine einzelne Münze in der Luft hinter ihr.
+Der Kontrast trägt das Bild — keine Erklärtexte, keine Pfeile.
+**Faktenstreifen:** *Eigener Server: ~90 $/Monat. So: 0,47 $/Monat.*
 
-**10 — Die App**
-Die Stakeholderin auf einem Sofa, Smartphone in der Hand. Auf dem Display groß
-**± 33 $** und ein kleines ruhiges Wellensymbol. Durch das Fenster hinter ihr
-sieht man ganz klein die Wetterstation auf dem Hügel — alles hängt zusammen.
-Text: **„Ein Knopf. Eine halbe Sekunde."**
+### 7 — *Nichts wird überschrieben*
+Ein Archivraum mit datierten Schubladen, warmes Licht. Die Botin legt ein neues
+Blatt ab. In der Ecke ein leerer, verstaubter Papierkorb — beiläufig, nicht
+betont.
+**Faktenstreifen:** *Jeder Tag einzeln abgelegt · jede Vorhersage nachstellbar*
+
+### 8 — *Ein Rechenblatt, nicht zwei*
+Links der Meteorologe beim Lernen, rechts derselbe im Dienst — dazwischen ein
+einziges großes Rechenblatt, das beide benutzen. Darunter, klein und blass, die
+falsche Variante: zwei Blätter, die auseinanderdriften.
+**Faktenstreifen:** *Dieselbe Berechnung in Training und Betrieb · durch Tests abgesichert*
+
+### 9 — *Erst besser als die Faustregel, dann im Dienst*
+Die ältere Beobachterin auf dem Zaun, zum Himmel schauend. Daneben, respektvoll
+auf Augenhöhe, der Meteorologe mit einem Prüfbogen. Kein Wettkampf, kein
+Sieger-Gesicht.
+**Faktenstreifen:** *Freigabe erst ab 2 % Verbesserung · gemessen, nicht geschätzt*
+
+### 10 — *Der gefährlichste Ausfall sieht aus wie Normalbetrieb*
+Das Stationshaus wirkt friedlich. Die Messhäuschen auf dem Hügel sind dunkel und
+überwachsen. Im Haus leuchtet ein kleines Warnlicht. Die Spannung liegt im
+Kontrast, nicht in Dramatik.
+**Faktenstreifen:** *5 Alarme · einer meldet, wenn vier Tage lang nichts passiert*
+
+### 11 — **FAKTENFOLIE: Kosten und Betrieb**
+Kein Bild. Links eine Kostenaufstellung, rechts eine kurze Betriebsübersicht.
+
+| Posten | pro Monat |
+|---|---|
+| Überwachung | 0,40 $ |
+| Ablage des Programms | 0,07 $ |
+| Rechenzeit | 0,004 $ |
+| Datenspeicher | 0,0001 $ |
+| **Summe** | **0,47 $** |
+
+Daneben: *Antwortzeit 0,5 s · 5 Alarme · kein Server, der im Leerlauf kostet ·
+Vergleichbare Bauweise mit eigenem Server: ~90 $/Monat*
+
+Eine Zeile darunter, klein: *Der größte Posten ist die Überwachung. Sie kostet
+mehr als alles, was sie überwacht — das ist bei Systemen dieser Größe normal
+und beabsichtigt.*
+
+### 12 — *Ein Knopf*
+Die Entscheiderin mit dem Telefon in der Hand, auf dem Display groß **± 33 $**
+und eine ruhige Wellenlinie. Durch das Fenster hinter ihr, klein, die
+Wetterstation auf dem Hügel.
+**Faktenstreifen:** *0,5 Sekunden von der Frage zur Antwort*
+
+---
 
 ## Format
 
-- **16:9**, für Beamer
-- Pro Folie ein großes Bild, das mindestens zwei Drittel der Fläche einnimmt
-- Text groß genug, um aus zehn Metern lesbar zu sein
-- Durchgehende Farbpalette: warmes Gold, Himmelblau, Wiesengrün, cremeweißer
-  Hintergrund. Rot nur für die beiden durchgestrichenen Pfeile auf Folie 2.
+- **16:9**
+- Bildfolien: Illustration ~70 %, Überschrift oben (max. 6 Wörter),
+  Faktenstreifen unten
+- Faktenfolien: keine Illustration, großzügiger Weißraum, eine klare Tabelle,
+  gleiche Schrift wie die Faktenstreifen — die beiden Welten sollen sichtbar
+  zusammengehören
+- Alle Schrift aus zehn Metern lesbar

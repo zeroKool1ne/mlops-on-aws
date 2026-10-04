@@ -38,6 +38,22 @@ GRAPH_ATTR = {
 DATA = Edge(color="#2563eb")
 TRIGGER = Edge(color="#ca8a04", style="dashed")
 
+# Deployment status, marked on the node rather than left to the reader.
+#
+# The architecture below is the design, agreed before any of it was built, and
+# it is unchanged. What changes month to month is how much of it is actually
+# provisioned - and a diagram that does not say which is which quietly claims
+# more than it should. Nodes carrying PLANNED are designed and not yet
+# deployed; everything else is live and can be curled.
+#
+# This is cheaper to maintain than two diagrams, and it is the honest answer
+# to "does this run?", which is the first question anyone asks.
+PLANNED = "\n(planned)"
+
+# Edges into something planned are drawn faintly, so an incomplete path is
+# visible at a glance instead of having to be traced node by node.
+PLANNED_EDGE = Edge(color="#cbd5e1", style="dashed")
+
 
 def overview() -> None:
     """The whole system on one page - the slide you present first."""
@@ -58,49 +74,51 @@ def overview() -> None:
             raw = S3("S3 /raw\n(Parquet)")
 
         with Cluster("Training (offline)"):
-            training = SagemakerTrainingJob("SageMaker\nTraining Job")
-            mlflow = Mlflow("MLflow\nTracking")
+            training = SagemakerTrainingJob("SageMaker\nTraining Job" + PLANNED)
+            mlflow = Mlflow("MLflow\nTracking\n(local, ADR-9)")
             registry = S3("S3 /model\n+ Model Registry")
 
         with Cluster("Serving (online)"):
             gateway = APIGateway("API Gateway")
             facade = Lambda("predict\n(facade)")
-            endpoint = SagemakerModel("SageMaker\nServerless Endpoint")
+            endpoint = SagemakerModel("SageMaker\nServerless Endpoint" + PLANNED)
 
         with Cluster("Observability"):
             logs = Cloudwatch("CloudWatch\nMetrics + Logs")
-            drift = Lambda("drift-check\n(PSI / KS test)")
-            alarm = CloudwatchAlarm("Alarm")
-            sns = SimpleNotificationServiceSns("SNS\n(e-mail)")
+            drift = Lambda("drift-check\n(PSI / KS test)" + PLANNED)
+            alarm = CloudwatchAlarm("Alarm" + PLANNED)
+            sns = SimpleNotificationServiceSns("SNS\n(e-mail)" + PLANNED)
 
         with Cluster("Delivery"):
-            actions = GithubActions("GitHub Actions")
+            actions = GithubActions("GitHub Actions" + PLANNED)
             ecr = ECR("ECR")
 
-        config = SystemsManagerParameterStore("Parameter Store\n(config)")
+        config = SystemsManagerParameterStore("Parameter Store\n(config)" + PLANNED)
 
         # Ingestion -> storage
         schedule >> TRIGGER >> fetch >> DATA >> raw
 
         # Training path
-        raw >> DATA >> training
-        training >> DATA >> mlflow
-        training >> DATA >> registry
-        registry >> DATA >> endpoint
+        raw >> PLANNED_EDGE >> training
+        training >> PLANNED_EDGE >> mlflow
+        training >> PLANNED_EDGE >> registry
+        registry >> PLANNED_EDGE >> endpoint
 
         # Inference path
-        users >> DATA >> gateway >> DATA >> facade >> DATA >> endpoint
+        users >> DATA >> gateway >> DATA >> facade
+        facade >> PLANNED_EDGE >> endpoint
 
         # Observability and the retraining loop
         facade >> DATA >> logs
-        endpoint >> DATA >> logs
-        logs >> DATA >> drift
-        drift >> TRIGGER >> alarm >> TRIGGER >> sns
-        drift >> Edge(color="#dc2626", style="dashed", label="drift detected") >> training
+        endpoint >> PLANNED_EDGE >> logs
+        logs >> PLANNED_EDGE >> drift
+        drift >> PLANNED_EDGE >> alarm >> PLANNED_EDGE >> sns
+        drift >> PLANNED_EDGE >> training
 
         # Cross-cutting
-        config >> Edge(style="dotted", color="#6b7280") >> facade
-        actions >> DATA >> ecr >> DATA >> facade
+        config >> PLANNED_EDGE >> facade
+        actions >> PLANNED_EDGE >> ecr
+        ecr >> DATA >> facade
 
 
 def training_path() -> None:
@@ -115,22 +133,23 @@ def training_path() -> None:
         direction="LR",
         graph_attr=GRAPH_ATTR,
     ):
-        schedule = EventbridgeScheduler("EventBridge\n(daily 06:00 UTC)")
+        schedule = EventbridgeScheduler("EventBridge Scheduler\n(23:30 UTC, Mon-Fri)")
         fetch = Lambda("fetch")
         raw = S3("S3 /raw")
 
         with Cluster("SageMaker Training Job"):
-            prep = SagemakerTrainingJob("preprocess\n+ features")
-            train = SagemakerTrainingJob("train XGBoost\n+ evaluate")
+            prep = SagemakerTrainingJob("preprocess\n+ features" + PLANNED)
+            train = SagemakerTrainingJob("train Random Forest\n+ evaluate" + PLANNED)
 
-        mlflow = Mlflow("MLflow\nparams, metrics,\nartifacts")
-        registry = S3("Model Registry\n(versioned)")
-        approved = SagemakerModel("approved model\n-> endpoint update")
+        mlflow = Mlflow("MLflow\nparams, metrics,\nartifacts\n(local, ADR-9)")
+        registry = S3("Model Registry\n(versioned)" + PLANNED)
+        approved = SagemakerModel("approved model\n-> endpoint update" + PLANNED)
 
-        schedule >> TRIGGER >> fetch >> DATA >> raw >> DATA >> prep >> DATA >> train
-        train >> DATA >> mlflow
-        train >> DATA >> registry
-        registry >> Edge(label="beats baseline?", color="#16a34a") >> approved
+        schedule >> TRIGGER >> fetch >> DATA >> raw
+        raw >> PLANNED_EDGE >> prep >> PLANNED_EDGE >> train
+        train >> PLANNED_EDGE >> mlflow
+        train >> PLANNED_EDGE >> registry
+        registry >> PLANNED_EDGE >> approved
 
 
 def inference_path() -> None:
@@ -144,14 +163,21 @@ def inference_path() -> None:
     ):
         client = Users("Client")
         gateway = APIGateway("API Gateway\nPOST /predict")
-        facade = Lambda("predict\nvalidate + build features")
-        endpoint = SagemakerModel("SageMaker\nServerless Inference")
+        facade = Lambda("predict\nvalidate + build features\n+ run the model")
+        artifact = S3("S3 /models/current\nmodel.tar.gz")
+        endpoint = SagemakerModel("SageMaker\nServerless Inference" + PLANNED)
         logs = Cloudwatch("CloudWatch\nlatency, errors,\npredictions")
 
-        client >> DATA >> gateway >> DATA >> facade >> DATA >> endpoint
-        endpoint >> Edge(color="#16a34a", label="prediction") >> facade
-        facade >> Edge(color="#16a34a") >> gateway >> Edge(color="#16a34a") >> client
+        # What runs today: the facade loads the artifact once per cold start
+        # and predicts in-process. SAGEMAKER_ENDPOINT is the switch (ADR-15).
+        client >> DATA >> gateway >> DATA >> facade
+        artifact >> Edge(color="#2563eb", label="once per cold start") >> facade
+        facade >> Edge(color="#16a34a", label="prediction") >> gateway
+        gateway >> Edge(color="#16a34a") >> client
         facade >> Edge(style="dotted", color="#6b7280") >> logs
+
+        # The designed production path, one environment variable away.
+        facade >> PLANNED_EDGE >> endpoint
 
 
 if __name__ == "__main__":

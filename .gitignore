@@ -45,3 +45,13 @@ mlruns/
 
 # Written by infra/manual/first-lambda-ingest-call.sh
 response.json
+
+# Working material between Daniel and Claude — briefs, scripts, speaker notes,
+# anything one of us wrote to instruct or align with the other. It is how the
+# work got made, not part of the work, and it is not published.
+presentation/design-brief.md
+presentation/illustrations.md
+presentation/script.md
+presentation/workflow-notes.md
+presentation/workflow-slides.md
+presentation/workflow-talk.md

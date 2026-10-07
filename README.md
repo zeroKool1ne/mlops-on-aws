@@ -103,9 +103,9 @@ and so callers do not need AWS credentials to get a prediction.
 
 ### Architecture decisions
 
-Every significant choice is recorded with its alternatives, its reasoning and its cost in
-[`docs/decisions.md`](docs/decisions.md) — including the ones where the trade-off is
-genuinely uncomfortable.
+Every significant choice is recorded with its alternatives, its reasoning and its
+cost — including the ones where the trade-off is genuinely uncomfortable. That
+record is being rewritten and will be published with the next release.
 
 The diagrams above are generated from [`docs/diagrams/architecture.py`](docs/diagrams/architecture.py),
 so they are versioned alongside the code rather than drifting away from it:
@@ -291,9 +291,6 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 ├── notebooks/         # exploratory data analysis (10y, 2y, 1m windows)
 ├── infra/             # Terraform: all 46 AWS resources
 ├── docs/
-│   ├── decisions.md   # 15 architecture decision records
-│   ├── model-card.md  # what the model is, and is not, for
-│   ├── aws-setup.md   # deployment, cost, teardown, troubleshooting
 │   └── diagrams/      # architecture diagrams as code
 ├── artifacts/         # model, metrics, SHAP output, drift reference
 ├── tests/             # 55 tests, offline by design
@@ -305,10 +302,11 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db       # every run, every metri
 
 | Document | Contents |
 |---|---|
-| [Architecture decisions](docs/decisions.md) | All 15 design choices, their alternatives and their trade-offs — including the two that turned out wrong and had to be amended |
-| [Model card](docs/model-card.md) | Metrics, intended use, limitations, and what this model must not be used for |
-| [AWS setup guide](docs/aws-setup.md) | Deployment from scratch, verification, measured cost estimate, teardown, troubleshooting |
 | API reference | Generated from the code, served at `/docs` on the running API |
+| Model card | Served as JSON at `/model` on the running API — target, features, training window, holdout metrics |
+
+The written documentation — architecture decisions, the prose model card and the
+deployment guide — is being rewritten and will be published with the next release.
 
 ## Cost
 
@@ -323,8 +321,7 @@ The measured figure is what the deployed resources have actually used; the
 projected one includes the monitoring that is not built yet. The projection
 named four alarms at $0.10 as its largest line, and the day they were created
 they became the largest line in the measurement too — which is the most useful
-thing a cost model can do. Full breakdown and
-method in [`docs/aws-setup.md`](docs/aws-setup.md#what-it-costs).
+thing a cost model can do.
 
 Nothing here reads a bill. Each resource's usage is measured and priced against
 the published rates — Lambda exactly, from the `Billed Duration` and
@@ -343,9 +340,8 @@ makes the naive sum wrong by threefold.
 
 What is deliberately absent: no EC2 instance, no NAT gateway ($32/month), no
 Real-Time SageMaker endpoint ($40/month), no RDS, no load balancer, no MLflow
-tracking server. Each was considered and rejected in
-[`docs/decisions.md`](docs/decisions.md); together they are the difference
-between $1.40 and roughly $90.
+tracking server. Each was considered and rejected on the record; together they
+are the difference between $1.40 and roughly $90.
 
 ## Credits
 

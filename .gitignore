@@ -55,3 +55,10 @@ presentation/script.md
 presentation/workflow-notes.md
 presentation/workflow-slides.md
 presentation/workflow-talk.md
+
+# Withheld until rewritten in Daniel's own voice — these come back, they are
+# not gone. The ADRs in particular are the strongest thing in this repository;
+# they are out only because the writing is not his yet.
+docs/decisions.md
+docs/aws-setup.md
+docs/model-card.md

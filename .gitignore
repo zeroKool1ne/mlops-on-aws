@@ -62,3 +62,6 @@ presentation/workflow-talk.md
 docs/decisions.md
 docs/aws-setup.md
 docs/model-card.md
+
+# PowerPoint exports — the Keynote original is the one that is kept
+*.pptx
